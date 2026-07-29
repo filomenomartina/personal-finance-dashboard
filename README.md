@@ -19,20 +19,32 @@ or transmitted. There is no server, no build step and no account. There is also 
 one-click **privacy mode**, so you can show the dashboard to someone without showing
 your numbers.
 
+### ▶ [Try it now](https://filomenomartina.github.io/personal-finance-dashboard/)
+
+Opens in your browser — nothing to install, nothing to download. Click **Load
+workbook**, pick the sample spreadsheet from this repo, and have a look around.
+
 ![Overview](screenshots/overview.png)
 
 ## Try it in 30 seconds
 
-1. Download this repo (**Code → Download ZIP**, or clone it).
-2. Open `index.html` in Chrome, Safari or Firefox.
-3. Click **Load workbook** and choose the included `finance-tracker-SAMPLE.xlsx`.
+**Hosted:** open <https://filomenomartina.github.io/personal-finance-dashboard/>,
+then click **Load workbook** and choose `finance-tracker-SAMPLE.xlsx` (download it
+from the file list above).
 
-You'll see the dashboard populated with fully synthetic sample data — that's what
-the screenshots show. Press **H** (or the **Hide figures** button) to try privacy
-mode.
+**Local:** download this repo (**Code → Download ZIP**, or clone it), open
+`index.html` in Chrome, Safari or Firefox, and load the same file.
 
-> The dashboard needs an internet connection the first time you open it, only to
-> fetch Chart.js and SheetJS from a CDN. See [Offline / self-hosting](#offline--self-hosting).
+Either way you'll see the dashboard populated with fully synthetic sample data —
+that's what the screenshots show. Press **H** (or the **Hide figures** button) to
+try privacy mode.
+
+Both routes are equally private: the hosted page is the same single file, served as
+a static page. Your spreadsheet is read in your own browser and never sent anywhere
+— there is no backend to send it to.
+
+> The page needs an internet connection the first time you open it, only to fetch
+> Chart.js and SheetJS from a CDN. See [Offline / self-hosting](#offline--self-hosting).
 
 ## The two views
 
