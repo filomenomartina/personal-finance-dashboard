@@ -1,0 +1,1058 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personal Finances — Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+/* READABILITY: min 12px, WCAG-AA contrast (muted text >=#9a9aa8 on dark cards) */
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#0f0f13;color:#e6e6ef;min-height:100vh;font-size:14px;line-height:1.5}
+.wrap{max-width:1180px;margin:0 auto;padding:0 24px 60px}
+header{display:flex;align-items:center;justify-content:space-between;padding:22px 24px 14px;max-width:1180px;margin:0 auto}
+h1{font-size:20px;font-weight:700;color:#fff;letter-spacing:-.2px}
+.sub{font-size:12.5px;color:#9a9aa8;margin-top:3px}
+.hpill{display:flex;gap:8px;align-items:center}
+.hseg{display:inline-flex;background:#0f0f13;border:1px solid #2a2a3a;border-radius:9px;padding:3px}
+.hseg button{background:transparent;border:0;color:#a7a7b8;font-size:13px;font-weight:600;padding:7px 16px;border-radius:7px;cursor:pointer;font-family:inherit}
+.hseg button.on{background:#a78bfa;color:#0f0f13}
+.msel{display:flex;align-items:center;gap:5px}.msel select{background:#0f0f13;border:1px solid #2a2a3a;color:#ddd;border-radius:6px;padding:5px 6px;font-size:12px;font-family:inherit}.msel button{background:#16161e;border:1px solid #2a2a3a;color:#bbb;border-radius:5px;width:24px;height:24px;cursor:pointer;font-size:14px}
+.pill{background:#16161e;border:1px solid #33334a;color:#cfcfe0;border-radius:20px;padding:7px 14px;font-size:12.5px;cursor:pointer}
+.pill:hover{border-color:#a78bfa;color:#fff}
+.concept-note{max-width:1180px;margin:0 auto 4px;padding:8px 24px}
+.concept-note div{background:#1a1622;border:1px solid #4a3a6a;border-radius:8px;padding:9px 14px;font-size:12.5px;color:#c9b8e6}
+.verdict{display:flex;gap:16px;align-items:center;border-radius:12px;padding:16px 20px;margin:6px 0 20px;border:1px solid}
+.verdict.amber{background:linear-gradient(90deg,#241d08,#16161e);border-color:#5a4a1a}
+.verdict .dot{width:12px;height:12px;border-radius:50%;flex:none;box-shadow:0 0 0 4px rgba(251,191,36,.15)}
+.verdict.amber .dot{background:#fbbf24}
+.verdict .vtitle{font-size:16px;font-weight:700;color:#fff}
+.verdict .vsub{font-size:13px;color:#c7c7d3;margin-top:2px}
+.verdict .vsub b{color:#fbbf24}
+.heroes{display:grid;grid-template-columns:1.5fr 1fr 1fr 1fr 1fr;gap:14px;margin-bottom:18px}
+.card{background:#16161e;border:1px solid #2a2a3a;border-radius:12px;padding:16px 18px;margin-bottom:16px}
+.hero-main{background:linear-gradient(135deg,#1c162e,#16161e);border-color:#3a2f5a}
+.klabel{font-size:12px;font-weight:600;color:#a7a7b8;text-transform:uppercase;letter-spacing:.6px}
+.big{font-size:34px;font-weight:800;color:#fff;line-height:1.1;margin-top:6px;white-space:nowrap}
+.hero-main .big{color:#c4b5fd}
+.mid{font-size:24px;font-weight:800;color:#fff;line-height:1.1;margin-top:6px;white-space:nowrap}
+.ksub{font-size:12px;color:#9a9aa8;margin-top:5px}
+.delta{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;margin-top:7px;padding:2px 8px;border-radius:20px}
+.up-good{color:#4ade80;background:rgba(74,222,128,.12)}
+.down-bad{color:#f87171;background:rgba(248,113,113,.12)}
+.bar{height:7px;border-radius:6px;background:#0f0f13;border:1px solid #2a2a3a;margin-top:10px;overflow:hidden}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#a78bfa,#4ade80)}
+.sec-h{font-size:12px;font-weight:700;color:#a7a7b8;text-transform:uppercase;letter-spacing:.7px;margin:6px 0 10px}
+.insights{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:22px}
+.ins{display:flex;gap:12px;align-items:flex-start;border-left:3px solid;padding:12px 14px;background:#16161e;border-radius:0 10px 10px 0}
+.ins.amber{border-color:#fbbf24}.ins.green{border-color:#4ade80}.ins.blue{border-color:#5b9cf6}
+.ins .itxt{font-size:13px;color:#d8d8e2;line-height:1.5}.ins .itxt b{color:#fff}
+.badge{font-size:12px;font-weight:800;letter-spacing:.5px;padding:2px 7px;border-radius:5px;background:rgba(74,222,128,.15);color:#4ade80;white-space:nowrap}
+.spark{flex:none}
+.viewbar{display:flex;align-items:center;justify-content:space-between;margin:6px 0 14px}
+.seg{display:inline-flex;background:#16161e;border:1px solid #2a2a3a;border-radius:9px;padding:3px}
+.seg button{background:transparent;border:0;color:#a7a7b8;font-size:13px;font-weight:600;padding:7px 16px;border-radius:7px;cursor:pointer;font-family:inherit}
+.seg button.on{background:#a78bfa;color:#0f0f13}
+.mini-toggles button{background:#16161e;border:1px solid #2a2a3a;color:#a7a7b8;font-size:12px;padding:5px 11px;border-radius:7px;cursor:pointer;font-family:inherit}
+.mini-toggles button.on{border-color:#a78bfa;color:#fff}
+.row2{display:grid;grid-template-columns:1.25fr 1fr;gap:16px}
+.row2 .card,.row2b .card{margin-bottom:0}
+.row2b{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.ctitle{font-size:12.5px;font-weight:700;color:#cfcfe0;letter-spacing:.3px;margin-bottom:2px}
+.chelp{font-size:11.5px;color:#9a9aa8;margin-bottom:12px}
+.chartbox{position:relative;height:300px}
+.donutwrap{position:relative;height:360px}
+.legend{margin-top:10px;display:flex;flex-direction:column;gap:6px}
+.lgi{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:#d8d8e2}
+.lgi .l{display:flex;align-items:center;gap:8px}.dotc{width:10px;height:10px;border-radius:3px;flex:none}
+.lgi .v{color:#fff;font-weight:600;font-variant-numeric:tabular-nums}
+/* goal bar */
+.goaltrack{height:20px;border-radius:10px;background:#0f0f13;border:1px solid #2a2a3a;overflow:hidden;margin:6px 0}
+.goaltrack>i{display:block;height:100%;background:linear-gradient(90deg,#4ade80,#a78bfa)}
+.goalrow{display:flex;justify-content:space-between;font-size:12.5px}
+.goalrow .a{color:#fff;font-weight:700}.goalrow .b{color:#9a9aa8}
+/* budget rows */
+.brow{display:grid;grid-template-columns:120px 1fr 92px;gap:12px;align-items:center;padding:9px 8px;border-radius:8px;cursor:pointer}
+.brow:hover{background:#1c1c28}
+.bcat{font-size:13px;color:#e6e6ef;font-weight:600}
+.btrack{height:16px;background:#0f0f13;border:1px solid #2a2a3a;border-radius:5px;position:relative;overflow:hidden}
+.btrack>i{display:block;height:100%}
+.bpace{font-size:12px;font-weight:700;text-align:right;font-variant-numeric:tabular-nums}
+.bamt{font-size:12px;color:#9a9aa8;text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.hintclick{font-size:11.5px;color:#8a8a9a;margin-top:8px}
+.drill{display:none;margin-top:12px;border-top:1px solid #2a2a3a;padding-top:12px}
+.drill.show{display:block}
+.drill h4{font-size:12.5px;color:#cfcfe0;margin-bottom:8px}
+.tx{display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #1e1e2a;color:#c7c7d3}
+.tx .a{color:#fff;font-variant-numeric:tabular-nums}
+#analyst{display:none}#analyst.show{display:block}
+.analyst-note{background:#16161e;border:1px dashed #3a3a4f;border-radius:10px;padding:14px 16px;color:#b8b8c6;font-size:13px;margin-bottom:14px}
+.subcatbox{position:relative;height:520px}
+.subleg{font-size:12px;color:#9a9aa8;margin-top:10px;display:flex;gap:18px;flex-wrap:wrap}
+.subleg span{display:inline-flex;align-items:center;gap:6px}
+.smgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.smcard{background:#16161e;border:1px solid #2a2a3a;border-radius:9px;padding:12px 14px}
+.smt{font-size:12.5px;color:#cfcfe0;margin-bottom:8px;font-weight:600}
+.smc{position:relative;height:200px}
+.notes{margin-top:34px;border-top:1px solid #2a2a3a;padding-top:18px}
+.notes h3{font-size:13px;color:#cfcfe0;margin-bottom:12px}
+.ntab{width:100%;border-collapse:collapse;font-size:12.5px}
+.ntab td,.ntab th{text-align:left;padding:7px 10px;border-bottom:1px solid #1e1e2a;color:#c7c7d3;vertical-align:top}
+.ntab th{color:#9a9aa8;font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+.tag{display:inline-block;font-size:12px;font-weight:700;color:#c4b5fd;background:rgba(167,139,250,.14);border-radius:5px;padding:1px 7px}
+body.privacy .pv{filter:blur(8px)}
+@media(max-width:900px){.heroes{grid-template-columns:1fr 1fr}.insights{grid-template-columns:1fr}.row2,.row2b{grid-template-columns:1fr}.smgrid{grid-template-columns:1fr 1fr}}
+
+/* --- wiring additions --- */
+.ovdelta{display:inline-flex;align-items:center;gap:4px;font-size:12.5px;font-weight:700;margin-top:7px;padding:2px 8px;border-radius:20px}
+#ovInsights{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px;margin-bottom:22px}
+.ovic{border-left:3px solid #4ade80;padding:12px 14px;background:#16161e;border-radius:0 10px 10px 0;font-size:13px;color:#d8d8e2;line-height:1.5}
+.ovic b{color:#fff}
+.smtitle{font-size:12px;color:#cfcfe0;margin-bottom:6px;font-weight:600}
+#emptyBanner{margin:0 0 16px;padding:10px 16px;background:#1b1b25;border:1px solid #2a2a3a;border-radius:8px;color:#9a9aa8;font-size:12.5px}
+canvas{max-width:100%}
+/* privacy toggle button (injected by the live layer) — match the theme */
+#pvToggle{background:#16161e;border:1px solid #33334a;color:#cfcfe0;border-radius:20px;padding:7px 14px;font-size:12.5px;cursor:pointer;font-family:inherit}
+#pvToggle:hover{border-color:#a78bfa;color:#fff}
+#pvToggle.on{background:#1c162e;border-color:#a78bfa;color:#c4b5fd}
+/* help badges */
+.help{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;margin-left:7px;border:1px solid #4a4a5a;border-radius:50%;color:#9a9aae;font-size:12px;font-weight:700;cursor:help;position:relative;vertical-align:middle;user-select:none;flex:none;text-transform:none;letter-spacing:0}
+.help:hover{border-color:#a78bfa;color:#a78bfa}
+.help .tip{display:none;position:fixed;width:240px;background:#1b1b25;border:1px solid #3a3a4a;border-radius:6px;padding:9px 11px;font-size:12px;font-weight:400;line-height:1.5;color:#cfcfe0;text-align:left;z-index:100000;box-shadow:0 6px 20px rgba(0,0,0,.55);white-space:normal;letter-spacing:0;text-transform:none;pointer-events:none}
+.help:hover .tip,.help.open .tip{display:block}
+/* balance-sheet & commitments detail (Analyst) */
+details.detail{background:#16161e;border:1px solid #2a2a3a;border-radius:12px;padding:0;margin-bottom:16px}
+details.detail>summary{list-style:none;cursor:pointer;padding:16px 18px;font-size:12.5px;font-weight:700;color:#cfcfe0;letter-spacing:.3px}
+details.detail>summary::-webkit-details-marker{display:none}
+details.detail>summary::before{content:'\25B8';color:#a78bfa;margin-right:9px;display:inline-block;transition:transform .15s}
+details.detail[open]>summary::before{transform:rotate(90deg)}
+.detail-body{padding:0 18px 18px}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:900px){.detail-grid{grid-template-columns:1fr}.smgrid{grid-template-columns:1fr}}
+.bs-title{font-size:12.5px;font-weight:700;color:#cfcfe0;letter-spacing:.3px;margin-bottom:8px}
+.bs-h{font-size:13px;font-weight:700;color:#fff;margin:12px 0 4px;letter-spacing:.5px}
+.bs-grp{font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.5px;margin:9px 0 2px}
+.bs-row{display:flex;justify-content:space-between;padding:3px 0 3px 14px;font-size:12.5px;color:#c7c7d3}
+.bs-row span:last-child{font-variant-numeric:tabular-nums;color:#e6e6ef}
+.bs-sub{display:flex;justify-content:space-between;padding:5px 0;margin-top:4px;font-size:12.5px;color:#eee;font-weight:600;border-top:1px solid #2a2a3a}
+.bs-sub span:last-child{font-variant-numeric:tabular-nums}
+.bs-tot{display:flex;justify-content:space-between;padding:7px 0;margin-top:4px;font-size:13.5px;color:#fff;font-weight:700;border-top:2px solid #3a3a4a}
+.bs-tot span:last-child{font-variant-numeric:tabular-nums}
+.bs-nw{display:flex;justify-content:space-between;padding:10px 14px;margin-top:10px;font-size:14px;color:#0f0f13;font-weight:700;background:#a78bfa;border-radius:6px}
+.bs-nw span:last-child{font-variant-numeric:tabular-nums}
+.dtable{width:100%;border-collapse:collapse}
+.dtable thead th{text-align:left;padding:7px 10px;font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #1e1e2a}
+.dtable tbody td{padding:6px 10px;font-size:12.5px;color:#c7c7d3;border-bottom:1px solid #1a1a24}
+.dtable td.name{color:#e6e6ef;font-weight:500}
+.dtable td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.detail-body table{width:100%;border-collapse:collapse}
+.detail-body thead th{text-align:left;padding:7px 10px;font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid #1e1e2a}
+.detail-body tbody td{padding:6px 10px;font-size:12.5px;color:#c7c7d3;border-bottom:1px solid #1a1a24}
+.detail-body td.name{color:#e6e6ef;font-weight:500}
+.detail-body td.num{font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.appfooter{margin-top:22px;padding-top:16px;border-top:1px solid #1e1e2a;font-size:12px;color:#8a8a9a;text-align:center;line-height:1.6}
+.appfooter a{color:#a78bfa;text-decoration:none}
+.appfooter a:hover{text-decoration:underline}
+</style></head>
+<body>
+<header style="position:sticky;top:0;z-index:50;background:#0f0f13;border-bottom:1px solid #2a2a3a">
+  <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
+    <div><h1>Personal Finances</h1><div class="sub"><span id="ownerName"></span><span id="dataAsOf">no workbook loaded</span></div></div>
+    <div class="hseg"><button type="button" id="ovBtn" class="on" aria-pressed="true" onclick="setView('ov')">Overview</button><button type="button" id="anBtn" aria-pressed="false" onclick="setView('an')">Analyst</button></div>
+  </div>
+  <div class="hpill" id="hdrRight">
+    <div class="msel" id="monthCtl" style="display:none"><span style="font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.6px;margin-right:2px">Month</span><button id="mPrev" title="Previous month">&lsaquo;</button><select id="monthSel"></select><button id="mNext" title="Next month">&rsaquo;</button></div>
+    <button class="pill" id="loadWb" type="button">Load workbook</button><input type="file" id="wbFile" accept=".xlsx" style="display:none">
+  </div>
+</header>
+
+<div class="wrap">
+  <div id="emptyBanner">No workbook loaded &mdash; nothing below is populated. Click <b style="color:#cfcfe0">Load workbook</b> and choose your saved Finance Tracker <code>.xlsx</code>.</div>
+
+  <div class="verdict amber">
+    <div class="dot" id="ovDot"></div>
+    <div><div class="vtitle" id="ovVt">Load your workbook</div>
+      <div class="vsub" id="ovVs">Click &ldquo;Load workbook&rdquo; to populate every figure below from your spreadsheet.</div></div>
+  </div>
+
+  <div class="heroes">
+    <div class="card hero-main"><div class="klabel">Safe to spend &middot; this month</div><div class="big" id="ovSafe">&mdash;</div><div class="ksub" id="ovSafeSub"></div><div class="bar"><i id="ovSafeBar" style="width:0%"></i></div></div>
+    <div class="card"><div class="klabel">Net worth</div><div class="mid" id="ovNW">&mdash;</div><span id="ovNWd"></span><div class="ksub" id="ovNWs"></div></div>
+    <div class="card"><div class="klabel">Net liquid</div><div class="mid" id="ovNL">&mdash;</div><span id="ovNLd"></span><div class="ksub">cash + savings &minus; short-term debt</div></div>
+    <div class="card"><div class="klabel">Savings rate</div><div class="mid" id="ovSR">&mdash;</div><span id="ovSRd"></span><div class="ksub">% of salary saved</div></div>
+    <div class="card"><div class="klabel">Cash runway</div><div class="mid" id="ovRW">&mdash;</div><div class="ksub">liquid &divide; monthly outgoings</div></div>
+  </div>
+
+  <div class="sec-h">What changed &middot; auto-detected</div>
+  <div id="ovInsights"></div>
+
+  <div id="overview">
+    <div class="card">
+      <div class="ctitle">Net liquidity &mdash; rebuild to goal</div>
+      <div class="goalrow"><span class="a" id="ovGoalNow">&mdash;</span><span class="b" id="ovGoalTgt">Goal &mdash;</span></div>
+      <div class="goaltrack"><i id="ovGoalBar" style="width:0%"></i></div>
+      <div class="chelp" id="ovGoalNote" style="margin:0"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle">12-month cash-flow forecast &mdash; will you dip below zero?</div>
+      <div class="chelp">Opens from net liquid, adds salary on payday, drops each dated bill on its due day. The low point is what matters.</div>
+      <div class="chartbox" style="height:230px"><canvas id="ovFc"></canvas></div>
+    </div>
+    <div class="row2">
+      <div class="card">
+        <div class="ctitle">Spending by category &mdash; monthly</div>
+        <div class="chelp">One chart replaces the old four. Toggle smoothing; the y-axis stays fixed so the shape is comparable.</div>
+        <div class="mini-toggles" style="display:flex;gap:8px;margin-bottom:10px">
+          <button type="button" id="tRaw" class="on" onclick="setSmooth(false)">Monthly</button><button type="button" id="tMA" onclick="setSmooth(true)">3-mo average</button>
+        </div>
+        <div class="chartbox"><canvas id="ovTrend"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="ctitle">Where the wealth sits</div>
+        <div class="chelp">Why runway is tight despite a high net worth.</div>
+        <div class="donutwrap"><canvas id="ovDonut"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Where it's going this month &mdash; vs budget</div>
+      <div class="chelp">Bar = spent vs day-proportional allowance. Click a category to see the transactions.</div>
+      <div id="ovBudget"></div>
+      <div class="drill" id="ovDrill" style="display:none"><h4 id="ovDrillTitle"></h4><div id="ovDrillList"></div></div>
+    </div>
+  </div>
+
+  <div id="analyst" style="display:none">
+
+    <div class="sec-h">Savings &amp; liquidity history</div>
+    <div class="row2b">
+      <div class="card"><div class="ctitle">Month-end cash balance</div><div class="chelp">From the Historical sheet.</div><div class="chartbox" style="height:220px"><canvas id="cashbal"></canvas></div></div>
+      <div class="card"><div class="ctitle">Savings rate (% of salary) &mdash; monthly</div><div class="chelp">&nbsp;</div><div class="chartbox" style="height:220px"><canvas id="savrate"></canvas></div></div>
+    </div>
+    <div class="card"><div class="ctitle">Net savings &amp; investments &mdash; per month</div><div class="chelp">Contributions, not balances.</div><div class="chartbox" style="height:220px"><canvas id="netsav"></canvas></div></div>
+
+    <div class="sec-h">Expenses by subcategory</div>
+    <div class="card">
+      <div class="ctitle">This month vs trailing-12-month average</div>
+      <div class="chelp">Bar = this month &middot; &#9670; diamond = your 12-month average (the reference point) &middot; arrow = trend vs that average. Excludes mortgage.</div>
+      <div class="subcatbox" id="subcatBox"><canvas id="subcat"></canvas></div>
+      <div class="subleg"><span><svg width="16" height="12"><polygon points="8,1 15,6 8,11 1,6" fill="#e6e6ef"/></svg> 12-mo average</span><span><svg width="16" height="12"><polygon points="4,2 14,6 4,10" fill="#f87171"/></svg> above average / rising</span><span><svg width="16" height="12"><polygon points="12,2 2,6 12,10" fill="#4ade80"/></svg> below average / falling</span></div>
+    </div>
+
+    <div class="sec-h">Per category &mdash; monthly actual (bars) + 3-month average (line)</div>
+    <div class="smgrid" id="smgrid"></div>
+
+    <div class="sec-h">Balance sheet &amp; commitments</div>
+    <details class="detail">
+      <summary>Itemised balance sheet, bills due, where money is owed &amp; affordability &mdash; click to expand</summary>
+      <div class="detail-body">
+        <div class="detail-grid">
+          <div><div class="bs-title">Balance Sheet</div><div id="bsWrap"></div></div>
+          <div>
+            <div class="ctitle" style="margin-bottom:8px">Bills due this month <span id="billsLeftHdr" style="color:#fbbf24;font-weight:600"></span></div>
+            <table class="dtable"><thead><tr><th>Bill</th><th class="num">Amount</th><th class="num">Day</th><th class="num">When</th></tr></thead><tbody id="billsDueBody"></tbody></table>
+          </div>
+        </div>
+        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:6px">Where money is owed</div><div class="chelp">Mortgage on the upper axis, everything else on the lower.</div><div class="chartbox" style="height:240px"><canvas id="liabMix"></canvas></div></div>
+        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:8px">Wish list &mdash; affordability</div><div id="wlInner"><div style="color:#9a9aa8;font-size:12.5px">Add a <b>Wish List</b> sheet to your workbook to see affordability here.</div></div></div>
+      </div>
+    </details>
+  </div>
+
+  <div class="sec-h" style="margin-top:26px">Release notes</div>
+  <details class="detail" id="relNotes">
+    <summary>Version history &mdash; click to expand</summary>
+    <div class="detail-body">
+      <table class="dtable"><thead><tr><th style="width:90px">Version</th><th style="width:96px">Date</th><th>Changes</th></tr></thead><tbody>
+        <tr><td class="name">v1.1</td><td>Jul 2026</td><td>Single common version for private and public use. Every owner-specific value moved out of the code and into the workbook&rsquo;s <code>Config</code> sheet: currency symbol, locale, owner name, category order, wealth groups, card-repayment accounts, history window and the alert thresholds. Removed the dead alpha-era UI that no longer had anything to draw into. Reconciled three contradictory budget-pace thresholds into one configurable pair. The liabilities chart now splits out whichever debt dominates instead of matching on the word &ldquo;mortgage&rdquo;. Same file ships here and in the public repo.</td></tr>
+        <tr><td class="name">v1.0</td><td>Jul 2026</td><td>Decision-first redesign wired directly to the workbook. <b>Overview</b>: on-track verdict, safe-to-spend, hero deltas, auto-insights, net-liquidity goal, 12-month cash-flow forecast, consolidated category trend, wealth donut, click-to-drill budget. <b>Analyst</b>: month-end cash, savings rate, net savings, expenses-by-subcategory (bars + 12-mo diamonds + trend arrows), per-category small multiples, and a collapsible balance sheet / bills / affordability panel. Categories and wealth groups driven by a <code>Config</code> sheet (auto-derived when absent). Continuous monthly + quarterly axes, privacy mode, and help badges throughout.</td></tr>
+        <tr><td class="name">Alphas</td><td>2026</td><td>Earlier single-scroll dashboard iterations (net-worth &amp; spending tabs, 30+ charts) &mdash; archived.</td></tr>
+      </tbody></table>
+      <div style="font-size:12px;color:#8a8a9a;margin-top:10px">Add a new row here whenever the dashboard changes, so the history travels with the file.</div>
+    </div>
+  </details>
+
+  <div class="appfooter">&copy; 2026 Filomeno Martina &middot; Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. All figures are read from your own workbook and stay in your browser &mdash; nothing is uploaded or embedded.</div>
+</div>
+
+<script>
+function setSmooth(s){window._ovSmooth=s;var a=document.getElementById('tRaw'),b=document.getElementById('tMA');if(a)a.classList.toggle('on',!s);if(b)b.classList.toggle('on',s);if(window.__ovTrend)window.__ovTrend();}
+function _rsz(sel){setTimeout(function(){try{window.dispatchEvent(new Event('resize'));}catch(e){}if(window.Chart&&Chart.getChart){document.querySelectorAll(sel+' canvas').forEach(function(cv){var c=Chart.getChart(cv);if(c){try{c.resize();c.update('none');}catch(e){}}});}},50);}
+function setView(v){var ov=v==='ov';var o=document.getElementById('overview'),a=document.getElementById('analyst');if(o)o.style.display=ov?'block':'none';if(a)a.style.display=ov?'none':'block';var _ob=document.getElementById('ovBtn'),_ab=document.getElementById('anBtn');
+  _ob.classList.toggle('on',ov);_ab.classList.toggle('on',!ov);
+  _ob.setAttribute('aria-pressed',ov?'true':'false');_ab.setAttribute('aria-pressed',ov?'false':'true');
+  if(!ov){try{if(window.__renderAnalyst)window.__renderAnalyst();}catch(e){}_rsz('#analyst');}else{_rsz('#overview');}
+  try{if(window.__pvRewrap)window.__pvRewrap();}catch(e){}}
+try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(e){}
+</script>
+<script>
+/* ---- Privacy mode: hide every figure so the dashboard can be shown to others. Isolated block. ---- */
+(function(){
+  var KEY='fin_privacy';
+  /* Built from the configured currency symbol so privacy mode keeps blurring money
+     when the workbook is not in sterling. Rebuilt via __pvSetCurrency on load. */
+  var RE;
+  function buildRE(sym){
+    var esc=String(sym||'£').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+    RE=new RegExp('('+esc+'\\s?\\d[\\d,]*(?:\\.\\d+)?\\s?[km]?|\\b\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?\\b|\\b\\d+(?:\\.\\d+)?\\s?%|\\b\\d+(?:\\.\\d+)?[km]\\b)','g');
+  }
+  buildRE('£');
+  window.__pvSetCurrency=function(sym){ buildRE(sym); };
+  var btn=document.createElement('button'); btn.id='pvToggle'; btn.type='button'; btn.title='Toggle privacy mode (H)';
+  function wrapFigures(){
+    /* re-runnable: only wraps text that isn't already inside a .pv span, so it can be called again
+       after the workbook loads (which replaces innerHTML and inserts fresh, unwrapped figures). */
+    var walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT,{acceptNode:function(n){
+      var p=n.parentNode; if(!p) return NodeFilter.FILTER_REJECT;
+      var tag=p.nodeName; if(tag==='SCRIPT'||tag==='STYLE'||tag==='BUTTON') return NodeFilter.FILTER_REJECT;
+      if(p.classList&&p.classList.contains('pv')) return NodeFilter.FILTER_REJECT;
+      RE.lastIndex=0; return RE.test(n.nodeValue)?NodeFilter.FILTER_ACCEPT:NodeFilter.FILTER_REJECT;}});
+    var nodes=[]; while(walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach(function(n){
+      var txt=n.nodeValue, frag=document.createDocumentFragment(), last=0, m; RE.lastIndex=0;
+      while((m=RE.exec(txt))){
+        if(m.index>last) frag.appendChild(document.createTextNode(txt.slice(last,m.index)));
+        var s=document.createElement('span'); s.className='pv'; s.textContent=m[0]; frag.appendChild(s);
+        last=m.index+m[0].length; }
+      if(last<txt.length) frag.appendChild(document.createTextNode(txt.slice(last)));
+      n.parentNode.replaceChild(frag,n); });
+  }
+  function setCharts(on){
+    if(!window.Chart) return;
+    var list=[];
+    if(Chart.getChart){ document.querySelectorAll('canvas').forEach(function(cv){ var c=Chart.getChart(cv); if(c) list.push(c); }); }
+    else if(Chart.instances){ list=Object.values(Chart.instances); }
+    list.forEach(function(ch){ try{
+      /* mutate the RAW config only (ch.config.options) — never ch.options: in Chart.js 4 that is a
+         reactive resolver proxy and writing custom keys into it corrupts option resolution. */
+      var cfg=(ch.config&&ch.config.options)||{}; var dirty=false;
+      ch.$pv=ch.$pv||{ticks:{},tooltip:null};
+      cfg.scales=cfg.scales||{};
+      Object.keys(ch.scales||{}).forEach(function(id){
+        var sc=ch.scales[id];
+        if(!sc||(sc.type!=='linear'&&sc.type!=='logarithmic')) return;
+        var s=cfg.scales[id]=cfg.scales[id]||{};
+        var t=s.ticks=s.ticks||{};
+        if(on){ if(!(id in ch.$pv.ticks)) ch.$pv.ticks[id]=('display' in t)?t.display:true; t.display=false; dirty=true; }
+        else if(id in ch.$pv.ticks){ t.display=ch.$pv.ticks[id]; delete ch.$pv.ticks[id]; dirty=true; }
+      });
+      var pl=cfg.plugins=cfg.plugins||{};
+      var tp=pl.tooltip=pl.tooltip||{};
+      if(on){ if(ch.$pv.tooltip===null) ch.$pv.tooltip=('enabled' in tp)?tp.enabled:true; tp.enabled=false; dirty=true; }
+      else if(ch.$pv.tooltip!==null){ tp.enabled=ch.$pv.tooltip; ch.$pv.tooltip=null; dirty=true; }
+      if(dirty) ch.update('none');
+    }catch(e){} });
+  }
+  function apply(on){
+    document.body.classList.toggle('privacy',on);
+    btn.textContent=on?'\ud83d\udc41 Show figures':'\ud83d\ude48 Hide figures';
+    btn.classList.toggle('on',on);
+    try{ localStorage.setItem(KEY,on?'1':'0'); }catch(e){}
+    setCharts(on);
+  }
+  btn.onclick=function(){ apply(!document.body.classList.contains('privacy')); };
+  /* re-wrap figures + re-hide chart axes after the live layer repopulates the DOM on workbook load */
+  window.__pvRewrap=function(){ try{ wrapFigures(); if(document.body.classList.contains('privacy')) setCharts(true); }catch(e){} };
+  document.addEventListener('keydown',function(e){
+    if((e.key==='h'||e.key==='H')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
+      var a=document.activeElement; if(a&&(a.tagName==='INPUT'||a.tagName==='TEXTAREA'))return;
+      btn.click(); }});
+  function init(){
+    var h=document.getElementById('hdrRight')||document.querySelector('header'); if(h) h.appendChild(btn);
+    wrapFigures();
+    var saved=false; try{ saved=localStorage.getItem(KEY)==='1'; }catch(e){}
+    if(saved) apply(saved); else apply(false);
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); } else { init(); }
+})();
+</script>
+
+<script>
+/* ---- LIVE layer: everything in this dashboard is populated from the workbook. Zero embedded financial data. ---- */
+(function(){
+  var CC={purple:'#a78bfa',blue:'#5b9cf6',pink:'#f472b6',green:'#4ade80',amber:'#fbbf24',red:'#f87171',teal:'#2dd4bf',grid:'#1e1e2a',tick:'#666'};
+  var STATE={};  // figures collected across update()/updateSpending() to drive the live commentary
+  var _wb=null,_bills=null,_billTot=0,_viewMonth=null;  // month-selector state (re-render Spending for a chosen month)
+  // parse a workbook date cell: JS Date (cellDates), Excel serial number, or a date string
+  function toDate(v){ if(v==null||v==='')return null; if(v instanceof Date)return v;
+    if(typeof v==='number')return new Date(Math.round((v-25569)*864e5));
+    var d=new Date(v); return isNaN(d.getTime())?null:d; }
+  /* Currency and locale come from Config!SETTINGS. CUR/LOC are the single source
+     of truth — no formatter below hardcodes a symbol, so changing the workbook's
+     "Currency symbol" row re-denominates the whole dashboard, privacy mode included. */
+  var CUR='£', LOC=undefined;
+  function setLocaleFrom(cfg){ CUR=cfg.set.currency||'£'; LOC=cfg.set.locale||undefined;
+    try{ if(window.__pvSetCurrency) window.__pvSetCurrency(CUR); }catch(e){} }
+  var money=function(v){return CUR+v;};
+  var gbp=function(n){return n==null?'—':CUR+Math.round(n).toLocaleString(LOC);};
+  var gM=function(n){return n==null?'—':(Math.abs(n)>=1e6?CUR+(n/1e6).toFixed(2)+'m':gbp(n));};
+  var fmtV=function(v){return CUR+(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+'m':Math.abs(v)>=1000?Math.round(v/1000)+'k':Math.round(v));};
+  var fmtV1=function(v){return CUR+(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+'m':(v/1000).toFixed(1)+'k');};
+  var kTick=function(v){return CUR+(v/1000)+'k';};
+  var unitTick=function(v){return CUR+v;};
+  /* Date formatting always goes through LOC so the file is not locked to one region. */
+  var dfmt=function(d,opts){try{return d.toLocaleDateString(LOC,opts);}catch(e){return d.toLocaleDateString(undefined,opts);}};
+  var dtfmt=function(d,opts){try{return d.toLocaleString(LOC,opts);}catch(e){return d.toLocaleString(undefined,opts);}};
+  var V=function(ws,a){var c=ws[a];return c?c.v:null;};
+  function rowsOf(ws){var r=XLSX.utils.decode_range(ws['!ref']);return[r.s.r+1,r.e.r+1];}
+  /* Look a value up by its ROW LABEL (column A contains kw) rather than a fixed cell address,
+     so inserting/removing rows in any section never breaks the dashboard. col defaults to 'B'. */
+  function findByLabel(ws,kw,col){ if(!ws)return null; col=col||'B'; kw=kw.toLowerCase();
+    var rr=rowsOf(ws);
+    for(var r=rr[0];r<=rr[1];r++){var a=V(ws,'A'+r);
+      if(typeof a==='string'&&a.toLowerCase().indexOf(kw)>=0){var c=V(ws,col+r);
+        if(typeof c==='number'||typeof c==='string')return c;}}
+    return null; }
+
+  Chart.defaults.font.family="-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif";
+  Chart.defaults.color='#888';
+  var barLabels={id:'barLabels',afterDatasetsDraw:function(chart){
+    if(document.body.classList.contains('privacy'))return;
+    var m0=chart.getDatasetMeta(0); if(!m0||m0.type!=='bar')return;
+    var ctx=chart.ctx; var F=chart.options.barLabel1dp?fmtV1:fmtV;
+    chart.data.datasets.forEach(function(ds,di){
+      var meta=chart.getDatasetMeta(di); if(meta.hidden||meta.data.length>(chart.options.barLabelMax||16))return;
+      ctx.save(); ctx.fillStyle='#cfcfe0'; ctx.font='12px -apple-system,sans-serif';
+      meta.data.forEach(function(bar,i){var v=ds.data[i]; if(v==null||v===0)return;
+        if(chart.options.indexAxis==='y'){ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(F(v),bar.x+4,bar.y);}
+        else{ctx.textAlign='center';ctx.textBaseline='bottom';ctx.fillText(F(v),bar.x,bar.y-3);}});
+      ctx.restore();
+    });
+  }};
+  Chart.register(barLabels);
+  var MONS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  // continuous-month helpers: fill every calendar month between first and last so no month is skipped on the x-axis (fix #1)
+  function addMon(ym,n){var p=String(ym).split('-');var d=new Date(+p[0],(+p[1]-1)+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+  function contRange(minYM,maxYM){var out=[];if(!minYM||!maxYM)return out;var m=minYM;var guard=0;while(m<=maxYM&&guard++<600){out.push(m);m=addMon(m,1);}return out;}
+  // quarterly x-axis: label only the first month of each quarter (Jan/Apr/Jul/Oct), year on a 2nd line under January (fixes #2/#3/#5)
+  function qTick(val,idx){var lbl=this.getLabelForValue?this.getLabelForValue(val):val;var p=String(lbl).split('-');var mi=(+p[1]||1)-1;if(mi%3!==0)return '';var mon=MONS3[mi]||String(lbl);return mi===0?[mon,"'"+p[0].slice(2)]:mon;}
+  // single initial of the first month of each quarter only (J A J O), year under January
+  function qInitTick(val,idx){var lbl=this.getLabelForValue?this.getLabelForValue(val):val;var p=String(lbl).split('-');var mi=(+p[1]||1)-1;if(mi%3!==0)return '';var ini=(MONS3[mi]||'?').charAt(0);return mi===0?[ini,"'"+p[0].slice(2)]:ini;}
+  // thin monthly gridline colour + a thicker line at each quarter start (paired with a faint monthly x-grid)
+  var GRIDM='#191922';
+  var quarterSep={id:'quarterSep',beforeDatasetsDraw:function(ch){var xs=ch.scales.x,labels=ch.data.labels;if(!xs||!labels||!labels.length)return;var ctx=ch.ctx,A=ch.chartArea;ctx.save();ctx.strokeStyle='#3a3a4f';ctx.lineWidth=1.5;labels.forEach(function(l,i){var p=String(l).split('-');var mi=(+p[1]||1)-1;if(mi%3===0){var x=xs.getPixelForValue(i);ctx.beginPath();ctx.moveTo(x,A.top);ctx.lineTo(x,A.bottom);ctx.stroke();}});ctx.restore();}};
+  // daily cash-flow forecast: thin gridline at each month start, thicker at each quarter start; label months (year under January)
+  function fcTick(val,idx){var l=this.getLabelForValue?this.getLabelForValue(val):'';var parts=String(l).split(' ');if(parts[0]!=='1')return '';var mon=parts[1]||'';var mi=MONS3.indexOf(mon);var yr=parts[2]||'';return (mi===0&&yr)?[mon,yr]:mon;}
+  var fcGrid={id:'fcGrid',beforeDatasetsDraw:function(ch){var xs=ch.scales.x,labels=ch.data.labels;if(!xs||!labels||!labels.length)return;var ctx=ch.ctx,A=ch.chartArea;ctx.save();labels.forEach(function(l,i){var parts=String(l).split(' ');if(i!==0&&parts[0]!=='1')return;var mi=MONS3.indexOf(parts[1]||'');var isQ=(mi%3===0);var x=xs.getPixelForValue(i);ctx.strokeStyle=isQ?'#3a3a4f':GRIDM;ctx.lineWidth=isQ?1.5:1;ctx.beginPath();ctx.moveTo(x,A.top);ctx.lineTo(x,A.bottom);ctx.stroke();});ctx.restore();}};
+
+  function readAccounts(ws){
+    var SEC=['CASH','SAVINGS','REFUNDS DUE','INVESTMENTS','LIABILITIES'];
+    var out={CASH:[],SAVINGS:[],'REFUNDS DUE':[],INVESTMENTS:[],LIABILITIES:[]};
+    var rr=rowsOf(ws),cur=null;
+    for(var r=rr[0];r<=rr[1];r++){
+      var a=V(ws,'A'+r),d=V(ws,'D'+r);
+      if(typeof a==='string'&&a.trim()&&typeof d!=='number'){var U=a.trim().toUpperCase();
+        if(SEC.indexOf(U)>=0){cur=U;continue;} if(U==='SUMMARY'||U==='EXCHANGE RATES'){cur=null;continue;}}
+      if(cur&&typeof a==='string'&&a.trim()&&typeof d==='number'&&!/subtotal/i.test(a)){var e=V(ws,'E'+r);out[cur].push([a.trim(),d,(e===''?null:e)]);}
+    }
+    return out;
+  }
+  /* ---------------------------------------------------------------------------
+     Optional 'Config' sheet — the ONLY place personal values live. Sections:
+
+       SETTINGS        Currency symbol | Locale | Owner | History from
+       WEALTH GROUPS   match keywords  | label  | colour
+       CATEGORIES      name            | colour | order
+       ACCOUNT GROUPS  match keywords  | role
+       THRESHOLDS      name            | value
+
+     Every section is optional and every value has a fallback, so a workbook with
+     no Config sheet at all still works — the dashboard derives what it can from
+     the data. Nothing below is hardcoded to any one person's accounts.
+     --------------------------------------------------------------------------- */
+  var DEFAULTS={
+    currency:'£', locale:undefined, owner:'', historyFrom:'',
+    runwayWarnMonths:2, paceWarnPct:100, paceAlertPct:110,
+    insightMinSpend:40, insightMinChangePct:15
+  };
+  var THRESH_KEYS={
+    'runway warning months':'runwayWarnMonths', 'pace warning pct':'paceWarnPct',
+    'pace alert pct':'paceAlertPct', 'insight min spend':'insightMinSpend',
+    'insight min change pct':'insightMinChangePct'
+  };
+  var _cfgCache=null;
+  function readConfig(wb){
+    if(_cfgCache) return _cfgCache;
+    var out={groups:[],cats:[],accounts:[],set:{}};
+    for(var k in DEFAULTS) out.set[k]=DEFAULTS[k];
+    var ws=wb&&wb.Sheets?wb.Sheets['Config']:null;
+    if(!ws){ _cfgCache=out; return out; }
+    var rr=rowsOf(ws),sec=null;
+    var kws=function(a){return String(a).split(',').map(function(x){return x.trim().toLowerCase();}).filter(Boolean);};
+    for(var r=rr[0];r<=rr[1];r++){
+      var a=V(ws,'A'+r),b=V(ws,'B'+r),c=V(ws,'C'+r);
+      var au=(typeof a==='string')?a.trim().toUpperCase():'';
+      if(au==='SETTINGS'){sec='S';continue;}
+      if(au==='WEALTH GROUPS'){sec='G';continue;}
+      if(au==='CATEGORIES'){sec='C';continue;}
+      if(au==='ACCOUNT GROUPS'){sec='A';continue;}
+      if(au==='THRESHOLDS'){sec='T';continue;}
+      if(typeof a!=='string'||!a.trim())continue;
+      var al=a.trim().toLowerCase();
+      if(sec==='S'){
+        if(al.indexOf('currency')===0&&typeof b==='string'&&b.trim()) out.set.currency=b.trim();
+        else if(al.indexOf('locale')===0&&typeof b==='string'&&b.trim()) out.set.locale=b.trim();
+        else if(al.indexOf('owner')===0&&typeof b==='string') out.set.owner=b.trim();
+        else if(al.indexOf('history from')===0&&b) out.set.historyFrom=String(b).trim();
+      }
+      else if(sec==='G'){ if(al.indexOf('match')===0)continue;
+        if(typeof b==='string'&&b.trim()) out.groups.push({match:kws(a),label:b.trim(),color:(typeof c==='string'&&c.trim())?c.trim():null}); }
+      else if(sec==='C'){ if(al==='category')continue;
+        if(typeof b==='string'&&/^#/.test(b.trim())) out.cats.push({name:a.trim(),color:b.trim(),order:(typeof c==='number')?c:999}); }
+      else if(sec==='A'){ if(al.indexOf('match')===0)continue;
+        if(typeof b==='string'&&b.trim()) out.accounts.push({match:kws(a),role:b.trim().toLowerCase()}); }
+      else if(sec==='T'){ if(al==='name')continue;
+        var key=THRESH_KEYS[al]; if(key&&typeof b==='number') out.set[key]=b; }
+    }
+    out.cats.sort(function(x,y){return x.order-y.order;});
+    _cfgCache=out;
+    return out;
+  }
+  /* Category display order: Config CATEGORIES order first, then anything else
+     the ledger contains, alphabetically. Replaces four separate hardcoded lists. */
+  function catOrder(present){
+    var cfg=(_cfgCache&&_cfgCache.cats)||[];
+    var ranked=cfg.map(function(x){return x.name;}).filter(function(n){return present.indexOf(n)>=0;});
+    var rest=present.filter(function(n){return ranked.indexOf(n)<0;}).sort(function(a,b){
+      return String(a).toLowerCase().localeCompare(String(b).toLowerCase());});
+    return ranked.concat(rest);
+  }
+  function readBills(ws){var rr=rowsOf(ws),b=[],seen=false;
+    for(var r=rr[0];r<=rr[1];r++){var a=V(ws,'A'+r);
+      if(typeof a==='string'&&a.trim().toLowerCase()==='bill'){seen=true;continue;}
+      if(!seen)continue;var amt=V(ws,'B'+r),day=V(ws,'C'+r);
+      if(typeof a==='string'&&a.trim()&&typeof amt==='number'&&typeof day==='number'){var h=V(ws,'H'+r);
+        b.push({n:a.trim(),amt:amt,day:day,fixed:(typeof h==='string'&&/^(f|y|fixed|1|true)/i.test(h.trim()))||h===1||h===true});}}
+    return b;
+  }
+  function readHistorical(ws){
+    if(!ws) return [];
+    var out=[]; var rr=rowsOf(ws);
+    for(var r=rr[0];r<=rr[1];r++){
+      var m=V(ws,'A'+r);
+      if(typeof m!=='string'||!/^\d{4}-\d{2}$/.test(m))continue;
+      out.push({m:m,cash:V(ws,'B'+r),pay:V(ws,'C'+r),exp:V(ws,'D'+r),netsav:V(ws,'E'+r),savpct:V(ws,'F'+r),pen:V(ws,'G'+r)});
+    }
+    out.sort(function(a,b){return a.m<b.m?-1:a.m>b.m?1:0;});
+    return out;
+  }
+  // Daily Log: dated net-liquid snapshots. Finds the header row ('Date' in col A) and the column headed
+  // 'Net Liquid', then returns [{date, nl}] sorted ascending. Values are hand-logged (hardcoded) per date.
+  function readDailyLog(ws){
+    if(!ws) return [];
+    var rr=rowsOf(ws), hdrRow=-1, cols='ABCDEFGHIJKLMN'.split(''), nlCol=null;
+    for(var r=rr[0];r<=rr[1];r++){var a=V(ws,'A'+r);
+      if(typeof a==='string'&&a.trim().toLowerCase()==='date'){hdrRow=r;
+        for(var ci=0;ci<cols.length;ci++){var hv=V(ws,cols[ci]+r); if(typeof hv==='string'&&hv.toLowerCase().indexOf('net liquid')>=0){nlCol=cols[ci];break;}}
+        break;}}
+    if(hdrRow<0||!nlCol) return [];
+    var out=[];
+    for(var r2=hdrRow+1;r2<=rr[1];r2++){var ac=ws['A'+r2]; if(ac&&ac.f) continue; /* skip the live connection row (formula date) — only read hardcoded snapshots */
+      var d=toDate(V(ws,'A'+r2)), nl=V(ws,nlCol+r2);
+      if(d&&typeof nl==='number') out.push({date:d,nl:nl});}
+    out.sort(function(a,b){return a.date-b.date;});
+    return out;
+  }
+  var pick=function(arr,kw){for(var i=0;i<arr.length;i++){if(arr[i][0].toLowerCase().indexOf(kw)>=0)return arr[i];}return null;};
+  var sumA=function(arr){return arr.reduce(function(t,x){return t+x[1];},0);};
+  function makeChart(id,cfg){var ex=Chart.getChart(id);if(ex)ex.destroy();var el=document.getElementById(id);if(el)return new Chart(el,cfg);}
+
+
+  /* Builds the 12-month daily cash-flow series consumed by the #ovFc chart on the
+     Overview. Opening balance = net liquid assets; salary lands on payday (a
+     Dashboard 'Payday' cell, else the last working day); every dated bill and
+     dated liability drops out on its due day. Publishes window.__fc. */
+  function buildForecast(wb,sec,bills,billTot,DB,cash,sav){
+    var open=(STATE.netliq!=null)?STATE.netliq:(cash+sav);   // opening = NET LIQUID ASSETS (liquid − short-term debts), live from tracker
+    var salary=(DB?findByLabel(DB,'net pay','B'):null)||0;
+    var paydayOverride=DB?findByLabel(DB,'payday','B'):null;   // optional: a fixed day-of-month on the Dashboard sheet overrides last-working-day
+    var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    function daysIn(y,m){return new Date(y,m+1,0).getDate();}
+    function lastWorkingDay(y,m){var d=new Date(y,m+1,0),w=d.getDay();if(w===6)d.setDate(d.getDate()-1);else if(w===0)d.setDate(d.getDate()-2);return d.getDate();}
+    var today=new Date(); var start=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+    var HORIZON=365, labels=[], data=[], bal=open;
+    var minBal=bal, minDate=start, endBal=bal, endDate=start, monthlyNet=salary-billTot;
+    // one-off dated debts: any liability with a due date in Accounts col F, dropped in on that day
+    // Card/mortgage liability balances already have their "to pay next" portion in the Bills sheet, so a
+    // dated liability that matches a bill name is skipped here to avoid double-counting (only the un-billed
+    // remainder of a card balance would ever need its own dated entry).
+    var billKeys=bills.map(function(b){return b.n.toLowerCase().replace(/[^a-z0-9]/g,'');});
+    function alreadyInBills(name){var n=name.toLowerCase().replace(/[^a-z0-9]/g,'');return !!n&&billKeys.some(function(k){return k&&(k.indexOf(n)>=0||n.indexOf(k)>=0);});}
+    var liabDue={}, liabTot=0, liabSkipped=[], horizonEnd=start.getTime()+HORIZON*864e5;
+    (sec&&sec.LIABILITIES||[]).forEach(function(x){var dd=toDate(x[2]); if(!dd)return; var tt=dd.getTime(); if(tt<start.getTime()||tt>horizonEnd)return;
+      if(alreadyInBills(x[0])){liabSkipped.push(x[0]);return;}
+      var key=dd.getFullYear()+'-'+dd.getMonth()+'-'+dd.getDate(); liabDue[key]=(liabDue[key]||0)+x[1]; liabTot+=x[1];});
+    for(var i=0;i<=HORIZON;i++){
+      var d=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
+      var y=d.getFullYear(),m=d.getMonth(),dom=d.getDate(),dim=daysIn(y,m);
+      if(i>0){
+        var pd=paydayOverride?Math.min(paydayOverride,dim):lastWorkingDay(y,m);
+        if(dom===pd) bal+=salary;
+        bills.forEach(function(b){ if(dom===Math.min(b.day,dim)) bal-=b.amt; });
+        var lk=y+'-'+m+'-'+dom; if(liabDue[lk]) bal-=liabDue[lk];
+      }
+      data.push(Math.round(bal));
+      labels.push(dom+' '+mons[m]+((dom===1||i===0)?" '"+String(y).slice(2):''));
+      if(bal<minBal){minBal=bal;minDate=d;} endBal=bal; endDate=d;
+    }
+    window.__fc={labels:labels.slice(),data:data.slice()};
+  }
+
+  function readDLcol(ws,kw){ if(!ws)return []; var rr=rowsOf(ws),cols='ABCDEFGHIJKLMN'.split(''),hdr=-1,col=null;
+    for(var r=rr[0];r<=rr[1];r++){var a=V(ws,'A'+r); if(typeof a==='string'&&a.trim().toLowerCase()==='date'){hdr=r; for(var ci=0;ci<cols.length;ci++){var hv=V(ws,cols[ci]+r); if(typeof hv==='string'&&hv.toLowerCase().indexOf(kw)>=0){col=cols[ci];break;}} break;}}
+    if(hdr<0||!col)return []; var out=[]; for(var r2=hdr+1;r2<=rr[1];r2++){var ac=ws['A'+r2]; if(ac&&ac.f)continue; var d=toDate(V(ws,'A'+r2)),v=V(ws,col+r2); if(d&&typeof v==='number')out.push({d:d,v:v});}
+    out.sort(function(a,b){return a.d-b.d;}); return out.map(function(x){return x.v;}); }
+  function topCatDeviation(wb,repMonth){ var TH=readConfig(wb).set; var SH=wb.Sheets['Transactions']; if(!SH||!window.XLSX)return null; var A=XLSX.utils.sheet_to_json(SH,{header:1});
+    var EXCL={Transfer:1,Income:1,Savings:1,REVIEW:1}; var bcm={};
+    for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue; var m=String(r[1]),amt=(+r[4]||0),l1=r[5]||'',bk=String(r[7]||''); if(EXCL[l1])continue; if(bk&&bk.toLowerCase().indexOf('recur')<0)continue; (bcm[l1]=bcm[l1]||{}); bcm[l1][m]=(bcm[l1][m]||0)+amt; }
+    if(!repMonth){var ms={};Object.keys(bcm).forEach(function(c){Object.keys(bcm[c]).forEach(function(m){ms[m]=1;});});var mk2=Object.keys(ms).sort();repMonth=mk2[mk2.length-1];}
+    var best=null; Object.keys(bcm).forEach(function(c){var mm=bcm[c],cur=mm[repMonth]||0; var months=Object.keys(mm).filter(function(m){return m<repMonth;}).sort().slice(-12); if(!months.length)return; var avg=months.reduce(function(a,m){return a+mm[m];},0)/months.length; if(avg<TH.insightMinSpend||cur<TH.insightMinSpend*1.25)return; var pct=Math.round((cur-avg)/avg*100); if(!best||pct>best.pct)best={cat:c,cur:Math.round(cur),avg:Math.round(avg),pct:pct};});
+    return (best&&best.pct>=TH.insightMinChangePct)?best:null; }
+  function renderOverview(wb,hist){ var TH=readConfig(wb).set; var S=STATE, G=function(id){return document.getElementById(id);}, T=function(id,v){var e=G(id);if(e)e.textContent=v;}; var mkc=function(id,cfg){if(!window.Chart)return;var ex=Chart.getChart(id);if(ex)ex.destroy();var el=document.getElementById(id);if(el)return new Chart(el,cfg);};
+    function delta(id,val,goodUp,unit,ref){var e=G(id);if(!e)return; if(val==null||!isFinite(val)){e.innerHTML='';return;} var up=val>=0,good=goodUp?up:!up,arrow=up?'▲':'▼';
+      var mag=unit==='money'?gbp(Math.abs(val)):(unit==='%'?Math.round(Math.abs(val))+'%':(unit==='pt'?Math.abs(val).toFixed(1)+'pt':(unit==='mo'?Math.abs(val).toFixed(1)+' mo':Math.abs(val))));
+      e.className='ovdelta'; e.style.color=good?'#4ade80':'#f87171'; e.style.background=good?'rgba(74,222,128,.12)':'rgba(248,113,113,.12)'; e.innerHTML=arrow+' '+mag+(ref?' '+ref:''); }
+    T('ovNW', S.networth!=null?gM(S.networth):'—');
+    T('ovNW s'.replace(' ',''), '');
+    if(S.gross&&S.netliq!=null) T('ovNWs', Math.round((S.gross-S.netliq)/S.gross*100)+'% illiquid');
+    T('ovNL', S.netliq!=null?gbp(S.netliq):'—');
+    var sr=null,srPrev=null; if(hist&&hist.length){var hv=hist.filter(function(h){return typeof h.savpct==='number';}); if(hv.length){sr=hv[hv.length-1].savpct; var p3=hv.slice(-4,-1); if(p3.length)srPrev=p3.reduce(function(a,b){return a+b.savpct;},0)/p3.length;}}
+    T('ovSR', sr!=null?Math.round(sr*100)+'%':'—'); if(sr!=null&&srPrev!=null)delta('ovSRd',(sr-srPrev)*100,true,'pt','vs 3-mo');
+    var rw=(S.netliq!=null&&S.recMo)?S.netliq/S.recMo:null;
+    T('ovRW', (rw!=null&&isFinite(rw)&&rw>0)?rw.toFixed(1)+' mo':(S.netliq!=null&&S.netliq<=0?'0 mo':'—'));
+    var safe=null,budg=null; if(S.budgetTotal!=null&&S.actualTotal!=null){safe=S.budgetTotal-S.actualTotal;budg=S.budgetTotal;} else if(S.recMo!=null&&S.actualTotal!=null){safe=S.recMo-S.actualTotal;budg=S.recMo;}
+    T('ovSafe', safe!=null?gbp(Math.max(0,safe)):'—');
+    var pe=S.pctElapsed; if(pe!=null&&pe>1)pe=pe/100; var dl=(pe!=null)?Math.max(0,Math.round((1-pe)*30)):null;
+    T('ovSafeSub', (safe!=null&&budg!=null)?(gbp(Math.max(0,budg-safe))+' of '+gbp(budg)+' used'+(dl!=null?' · ~'+dl+' days left':'')):'');
+    var sb=G('ovSafeBar'); if(sb&&budg)sb.style.width=Math.max(0,Math.min(100,Math.round((budg-safe)/budg*100)))+'%';
+    try{var dln=readDLcol(wb.Sheets['Daily Log'],'net liquid'); if(dln.length>=2)delta('ovNLd',dln[dln.length-1]-dln[dln.length-2],true,'money','MoM');}catch(e){}
+    try{var nw=readDLcol(wb.Sheets['Daily Log'],'net worth'); if(nw.length>=2)delta('ovNWd',nw[nw.length-1]-nw[nw.length-2],true,'money','MoM');}catch(e){}
+    if(S.goal){var liq=(S.netliq!=null?S.netliq:S.reserve)||0; var pg=Math.max(0,Math.min(100,Math.round(liq/S.goal*100))); T('ovGoalNow',gbp(liq)); T('ovGoalTgt','Goal '+gbp(S.goal)); var gb=G('ovGoalBar'); if(gb)gb.style.width=pg+'%'; T('ovGoalNote',pg+'% of goal'); }
+    if(window.__cat){var Cc=window.__cat,_m3=function(a){return a.map(function(_,i){return i<2?null:Math.round((a[i]+a[i-1]+a[i-2])/3);});};
+      // 24-month window ending at the SELECTED month (fix #2), MA computed on the full series so the window's left edge stays continuous
+      var _mYM=Cc.monthsYM||[], _end=_mYM.indexOf(Cc.curM); if(_end<0)_end=_mYM.length-1;
+      var _s=Math.max(0,_end-23), _e=_end+1;
+      var _wLabels=Cc.labels.slice(_s,_e), _wYM=(Cc.monthsYM||[]).slice(_s,_e), _hd=Cc.hasData||{}, _wRaw={}, _wMA={};
+      Cc.cats.forEach(function(c){var full=Cc.catMon[c].map(Math.round); var raw=full.slice(_s,_e), ma=_m3(full).slice(_s,_e);
+        _wRaw[c]=raw.map(function(v,i){return _hd[_wYM[i]]?v:null;}); _wMA[c]=ma.map(function(v,i){return _hd[_wYM[i]]?v:null;});});
+      // fixed y-range from the RAW windowed data + a "nice" round tick step so every gridline is labelled (fix #1/#3)
+      var _allRaw=[0]; Cc.cats.forEach(function(c){_wRaw[c].forEach(function(v){if(v!=null)_allRaw.push(v);});});
+      var _lo=Math.min.apply(null,_allRaw), _hi=Math.max.apply(null,_allRaw);
+      function _nice(x){var e=Math.pow(10,Math.floor(Math.log(Math.max(1,x))/Math.LN10)),f=x/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e;}
+      var _step=_nice(Math.max(1,(_hi-_lo))/5)||500;
+      var _yMin=Math.floor(_lo/_step)*_step, _yMax=Math.ceil(_hi/_step)*_step;
+      var _ovZero={id:'ovZero',afterDraw:function(ch){var ys=ch.scales.y;if(!ys)return;var yp=ys.getPixelForValue(0),A=ch.chartArea,ctx=ch.ctx;if(!isFinite(yp)||yp<A.top-1||yp>A.bottom+1)return;ctx.save();ctx.strokeStyle='#8a8a9a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(A.left,yp);ctx.lineTo(A.right,yp);ctx.stroke();ctx.restore();}};
+      var _fmtYM=function(l){var p=String(l).split('-');return (MONS3[(+p[1]||1)-1]||l)+" '"+String(p[0]).slice(2);};
+      window.__ovTrend=function(){ if(!document.getElementById('ovTrend'))return; mkc('ovTrend',{type:'line',plugins:[_ovZero,quarterSep],data:{labels:_wYM,datasets:Cc.cats.map(function(c){return {label:c,data:(window._ovSmooth?_wMA[c]:_wRaw[c]),borderColor:Cc.col[c],backgroundColor:'transparent',borderWidth:1.8,tension:.3,pointRadius:0,spanGaps:false};})},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#c7c7d3',usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:12}}},tooltip:{callbacks:{title:function(it){return _fmtYM(it[0].label);}}}},scales:{x:{grid:{color:GRIDM},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:qTick}},y:{min:_yMin,max:_yMax,ticks:{stepSize:_step,color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+(v/1000).toFixed(1)+'k';}},grid:{color:'#1e1e2a'}}}}}); };
+      window.__ovTrend(); }
+    (function(){ if(!document.getElementById('ovDonut'))return; var comp=(S.wealthComp||[]).filter(function(x){return x[2]>0;});
+      var callout={id:'ovcallout',afterDatasetsDraw:function(ch){var meta=ch.getDatasetMeta(0),ctx=ch.ctx,ds=ch.data.datasets[0].data,labels=ch.data.labels,cols=ch.data.datasets[0].backgroundColor,tot=ds.reduce(function(a,b){return a+(b||0);},0)||1,priv=document.body.classList.contains('privacy'),W=ch.width;
+        var fk=function(v){return v>=1e6?CUR+(v/1e6).toFixed(2)+'M':(v>=1000?CUR+Math.round(v/1000)+'k':CUR+Math.round(v));};
+        var items=[]; meta.data.forEach(function(arc,i){if(!ds[i])return;var ang=(arc.startAngle+arc.endAngle)/2;items.push({i:i,ang:ang,cx:arc.x,cy:arc.y,r:arc.outerRadius,right:Math.cos(ang)>=0,y:arc.y+Math.sin(ang)*(arc.outerRadius+16)});});
+        var GAP=34; ['R','L'].forEach(function(side){var arr=items.filter(function(t){return side==='R'?t.right:!t.right;}).sort(function(a,b){return a.y-b.y;}); for(var k=1;k<arr.length;k++){if(arr[k].y-arr[k-1].y<GAP)arr[k].y=arr[k-1].y+GAP;}});
+        ctx.save(); items.forEach(function(t){var r=t.r,x0=t.cx+Math.cos(t.ang)*r,y0=t.cy+Math.sin(t.ang)*r,edge=t.right?(t.cx+r+8):(t.cx-r-8),lx=t.right?(W-6):6;
+          ctx.font='700 14px -apple-system,BlinkMacSystemFont,sans-serif'; var nm=labels[t.i], sub=(priv?CUR+'•••':fk(ds[t.i]))+'   ·   '+Math.round(ds[t.i]/tot*100)+'%';
+          ctx.font='13px -apple-system,BlinkMacSystemFont,sans-serif'; var w13=ctx.measureText(sub).width; ctx.font='700 14px -apple-system,BlinkMacSystemFont,sans-serif'; var w14=ctx.measureText(nm).width; var tw=Math.max(w13,w14);
+          var inner=t.right?(lx-tw-6):(lx+tw+6);
+          ctx.strokeStyle=cols[t.i];ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x0,y0);ctx.lineTo(edge,t.y);ctx.lineTo(inner,t.y);ctx.stroke();
+          ctx.textAlign=t.right?'right':'left';
+          ctx.fillStyle='#f2f2f7';ctx.font='700 14px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='bottom';ctx.fillText(nm,lx,t.y-1);
+          ctx.fillStyle='#a7a7b8';ctx.font='13px -apple-system,BlinkMacSystemFont,sans-serif';ctx.textBaseline='top';ctx.fillText(sub,lx,t.y+2);
+        }); ctx.restore(); }};
+      mkc('ovDonut',{type:'doughnut',plugins:[callout],data:{labels:comp.map(function(x){return x[0];}),datasets:[{data:comp.map(function(x){return x[2];}),backgroundColor:comp.map(function(x){return x[1];}),borderColor:'#16161e',borderWidth:2}]},options:{maintainAspectRatio:false,cutout:'56%',layout:{padding:{left:132,right:132,top:28,bottom:28}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+gbp(c.raw);}}}}}});
+      })();
+    if(window.__bva){var Bb=window.__bva,pe2=S.pctElapsed; if(pe2!=null&&pe2>1)pe2=pe2/100; if(!pe2)pe2=0.5; var rws=Bb.rows.filter(function(r){return r.budget>0||r.actual>0;});
+      var eb=G('ovBudget'); if(eb)eb.innerHTML=rws.map(function(r){var pace=r.budget>0?Math.round(r.actual/(r.budget*pe2)*100):null,col=pace==null?'#9a9aa8':(pace>TH.paceAlertPct?'#f87171':pace>TH.paceWarnPct?'#fbbf24':'#4ade80'),w=r.budget>0?Math.min(100,Math.round(r.actual/r.budget*100)):0;
+        return '<div onclick="__ovDrill(\''+r.cat.replace(/\x27/g,'')+'\')" style="display:grid;grid-template-columns:130px 1fr 96px;gap:12px;align-items:center;padding:9px 6px;border-radius:8px;cursor:pointer" onmouseover="this.style.background=\'#1c1c28\'" onmouseout="this.style.background=\'\'"><div style="font-size:13px;color:#e6e6ef;font-weight:600">'+r.cat+'</div><div style="height:16px;background:#0f0f13;border:1px solid #2a2a3a;border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:'+w+'%;background:'+col+'"></i></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+col+'">'+(pace==null?'—':pace+'%')+'</div><div style="font-size:12px;color:#9a9aa8">'+gbp(r.actual)+' / '+gbp(r.budget)+'</div></div></div>';}).join('');
+      window.__ovDrill=function(cat){ window.__ovDrillCat=cat; try{var SH=wb.Sheets['Transactions'],A=XLSX.utils.sheet_to_json(SH,{header:1}),rx=[]; for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue; if(String(r[1])===Bb.month&&(r[5]||'')===cat)rx.push([String(r[3]||''),(+r[4]||0)]);} rx.sort(function(a,b){return b[1]-a[1];}); var d=G('ovDrill'); if(d){var _tot=rx.reduce(function(a,t){return a+t[1];},0); G('ovDrillTitle').textContent=cat+' — '+Bb.month+' · '+rx.length+' transactions · '+gbp(_tot); var _l=G('ovDrillList'); _l.style.maxHeight='360px'; _l.style.overflowY='auto'; _l.style.paddingRight='14px'; _l.innerHTML=rx.map(function(t){return '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #1e1e2a;color:#c7c7d3"><span>'+t[0]+'</span><span style="color:#fff">'+gbp(t[1])+'</span></div>';}).join(''); d.style.display='block';} }catch(e){} };
+      // keep an open drill in sync with the selected month
+      if(window.__ovDrillCat){var _dd=G('ovDrill'); if(_dd&&_dd.style.display!=='none') window.__ovDrill(window.__ovDrillCat);} }
+    if(window.__fc&&document.getElementById('ovFc')){var Fd=window.__fc,mnV=Math.min.apply(null,Fd.data),mnI=Fd.data.indexOf(mnV);
+      var mpl={id:'ovmin',afterDatasetsDraw:function(ch){if(document.body.classList.contains('privacy'))return;var xs=ch.scales.x,ys=ch.scales.y,ctx=ch.ctx,x=xs.getPixelForValue(mnI),y=ys.getPixelForValue(mnV);if(!isFinite(x)||!isFinite(y))return;ctx.save();ctx.fillStyle='#f87171';ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText('low '+gbp(mnV),x,y-9);ctx.restore();}};
+      mkc('ovFc',{type:'line',plugins:[mpl,fcGrid],data:{labels:Fd.labels,datasets:[{data:Fd.data,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.10)',fill:true,borderWidth:2,pointRadius:0,tension:.15,segment:{borderColor:function(c){return (c.p0.parsed.y<0||c.p1.parsed.y<0)?'#f87171':'#a78bfa';}}}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return gbp(c.raw);}}}},scales:{x:{grid:{display:false},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:fcTick}},y:{grid:{color:'#1e1e2a'},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+(v/1000).toFixed(0)+'k';}}}}}}); }
+
+    var ins=[];
+    try{var dev=topCatDeviation(wb,S.repMonth); if(dev)ins.push({c:'#fbbf24',h:'<b>'+dev.cat+' '+gbp(dev.cur)+'</b> this month — '+(dev.pct>=0?'up':'down')+' '+Math.abs(dev.pct)+'% vs your 12-month average ('+gbp(dev.avg)+').'});}catch(e){}
+    if(S.networth!=null&&S.netliq!=null){var lh=S.largestHolding,bp=(lh&&S.gross)?Math.round(lh[1]/S.gross*100):null; ins.push({c:'#5b9cf6',h:'Wealth is concentrated: <b>'+gM(S.networth)+'</b> net worth, but only <b>'+gbp(S.netliq)+'</b> liquid'+(bp?' — '+lh[0]+' is '+bp+'% of assets.':'.')});}
+    if(hist&&hist.length){var st=0;for(var i=hist.length-1;i>=0;i--){if(typeof hist[i].netsav==='number'&&hist[i].netsav>0)st++;else break;} if(st>=2)ins.push({c:'#4ade80',h:'<b>'+st+'-month saving streak</b> — you moved money to savings every month. Keep it going.'});}
+    var iw=G('ovInsights'); if(iw)iw.innerHTML=ins.slice(0,3).map(function(x){return '<div class="ovic" style="border-left-color:'+x.c+'">'+x.h+'</div>';}).join('');
+    var vt='On track',vs='',dot='#4ade80';
+    if(rw!=null&&rw<TH.runwayWarnMonths){dot='#fbbf24';vt='Watch your cash this week';vs='About '+rw.toFixed(1)+' months of liquid runway'+(safe!=null?' · '+gbp(Math.max(0,safe))+' safe to spend this month':'')+'.';}
+    else if(S.pace!=null&&S.pace>TH.paceWarnPct){dot='#fbbf24';vt='Spending ahead of pace';vs="You've used "+S.pace+'% of your day-proportional allowance this month.';}
+    else {vs=(safe!=null?gbp(Math.max(0,safe))+' left to spend this month':'')+(sr!=null?' · saving '+Math.round(sr*100)+'%':'')+(S.pace!=null?' · '+S.pace+'% of pace used':'')+'.';}
+    T('ovVt',vt); T('ovVs',vs); var d=G('ovDot'); if(d)d.style.background=dot;
+  }
+  // ---- Curated ANALYST view: month-end cash, savings rate, net savings, combined subcategory chart, per-category small multiples ----
+  function renderAnalyst(){ var TH=readConfig(_wb).set;
+    if(!window.Chart) return;
+    var hist=window.__hist||[]; var hmYM=hist.map(function(h){return h.m;});
+    // continuous month axis (fill gaps → every month shown; missing month = null, not a squeezed axis) (fix #1)
+    var months=hmYM.length?contRange(hmYM[0],hmYM[hmYM.length-1]):[];
+    var hmap={}; hist.forEach(function(h){hmap[h.m]=h;});
+    var cashArr=months.map(function(m){return hmap[m]?hmap[m].cash:null;});
+    var srArr=months.map(function(m){var h=hmap[m];return (h&&h.savpct!=null)?Math.round(h.savpct*1000)/10:null;});
+    var nsArr=months.map(function(m){return hmap[m]?hmap[m].netsav:null;});
+    // pension-inclusive overlays (only where employee pension data exists) — Saved+Pen, and (Saved+Pen)/(Pay+Pen)
+    var srInclArr=months.map(function(m){var h=hmap[m];if(!h||h.savpct==null)return null;var pen=(typeof h.pen==='number'?h.pen:0);if(!pen)return null;var pay=(typeof h.pay==='number'?h.pay:0),ns=(typeof h.netsav==='number'?h.netsav:0),d=pay+pen;return d?Math.round((ns+pen)/d*1000)/10:null;});
+    var nsInclArr=months.map(function(m){var h=hmap[m];if(!h||typeof h.netsav!=='number')return null;var pen=(typeof h.pen==='number'?h.pen:0);if(!pen)return null;return h.netsav+pen;});
+    var _qx=function(tickFn){return {grid:{color:GRIDM},ticks:{color:'#9a9aa8',autoSkip:false,maxRotation:0,font:{size:12},callback:tickFn}};};
+    makeChart('cashbal',{type:'line',plugins:[quarterSep],data:{labels:months,datasets:[{data:cashArr,borderColor:CC.purple,backgroundColor:'rgba(167,139,250,.12)',fill:true,tension:.3,pointRadius:0,borderWidth:2,spanGaps:false}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return gbp(c.raw);}}}},scales:{x:_qx(qInitTick),y:{grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:kTick}}}}});
+    // savings rate: clip the axis to ±100% when a rare extreme (e.g. -230%) would squash every normal month; clipped months are marked with their true value
+    var _srReal=srArr.filter(function(v){return v!=null;});
+    var _srLo=_srReal.length?Math.min.apply(null,_srReal):0, _srHi=_srReal.length?Math.max.apply(null,_srReal):0;
+    var _srClip=(_srLo<-100||_srHi>100), _srMin=_srClip?-100:undefined, _srMax=_srClip?100:undefined;
+    var _srMarks={id:'srMarks',afterDatasetsDraw:function(ch){if(!_srClip||document.body.classList.contains('privacy'))return;var A=ch.chartArea,ctx=ch.ctx,meta=ch.getDatasetMeta(0);ctx.save();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';srArr.forEach(function(v,i){if(v==null||!meta.data[i]||(v<=100&&v>=-100))return;var over=v>100;var px=Math.min(Math.max(meta.data[i].x,A.left+30),A.right-30);ctx.fillStyle=CC.green;ctx.textBaseline=over?'top':'bottom';ctx.fillText((over?'▲ ':'▼ ')+v.toFixed(0)+'%',px,over?A.top+2:A.bottom-2);});ctx.restore();}};
+    makeChart('savrate',{type:'line',plugins:[quarterSep,_srMarks],data:{labels:months,datasets:[{label:'liquid',data:srArr,borderColor:CC.green,backgroundColor:'rgba(74,222,128,.10)',fill:true,tension:.3,pointRadius:0,borderWidth:2,pointStyle:'line',spanGaps:false},{label:'incl. pension',data:srInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',fill:false,tension:.3,pointRadius:0,borderWidth:2,spanGaps:false}]},options:{maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return c.raw==null?'':(c.dataset.label?c.dataset.label+': ':'')+c.raw.toFixed(1)+'%';}}}},scales:{x:_qx(qInitTick),y:{min:_srMin,max:_srMax,grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return v+'%';}}}}}});
+    makeChart('netsav',{type:'bar',plugins:[quarterSep],data:{labels:months,datasets:[{label:'liquid',pointStyle:'rect',data:nsArr,backgroundColor:nsArr.map(function(v){return (v==null)?'transparent':(v>=0?'rgba(74,222,128,.65)':'rgba(248,113,113,.65)');})},{type:'line',label:'incl. pension',data:nsInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',borderWidth:2,pointRadius:0,fill:false,tension:.3,spanGaps:false}]},options:{maintainAspectRatio:false,barLabelMax:0,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return (c.dataset.label?c.dataset.label+': ':'')+gbp(c.raw);}}}},scales:{x:_qx(qTick),y:{grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:kTick}}}}});
+    // combined subcategory chart: this-month bars + trailing-12mo avg diamonds + trend arrows
+    var SF=window.__subflat||[]; var box=document.getElementById('subcatBox'); if(box)box.style.height=Math.max(420,SF.length*22+50)+'px';
+    if(SF.length){
+      var diaArrow={id:'daAn',afterDatasetsDraw:function(ch){var meta=ch.getDatasetMeta(0),xs=ch.scales.x,ctx=ch.ctx,A=ch.chartArea,priv=document.body.classList.contains('privacy');ctx.save();ctx.font='12px -apple-system,sans-serif';ctx.textBaseline='middle';
+        meta.data.forEach(function(bar,i){var s=SF[i]; if(!s)return; var cur=s.cur,ttm=s.ttm;
+          if(!priv){ctx.fillStyle='#cfcfe0';ctx.textAlign='left';ctx.fillText(CUR+cur,bar.x+7,bar.y);}
+          if(ttm!=null){var xt=xs.getPixelForValue(ttm),y=bar.y; if(xt<A.left)xt=A.left; if(xt>A.right)xt=A.right;
+            ctx.fillStyle='#eef0f4';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(xt,y-7.5);ctx.lineTo(xt+7.5,y);ctx.lineTo(xt,y+7.5);ctx.lineTo(xt-7.5,y);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(0,0,0,.85)';ctx.lineWidth=1.4;ctx.stroke();
+            if(s.tr){var up=s.tr>0;ctx.fillStyle=up?'#f87171':'#4ade80';ctx.beginPath();if(up){ctx.moveTo(xt+13.5,y-6);ctx.lineTo(xt+24,y);ctx.lineTo(xt+13.5,y+6);}else{ctx.moveTo(xt-13.5,y-6);ctx.lineTo(xt-24,y);ctx.lineTo(xt-13.5,y+6);}ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;ctx.stroke();}}
+        });ctx.restore();}};
+      // category group labels on the left: coloured spine + rotated name per contiguous category, with a separator between groups
+      var groupLabels={id:'grpLab',afterDatasetsDraw:function(ch){var meta=ch.getDatasetMeta(0),ctx=ch.ctx,A=ch.chartArea;if(!meta||!meta.data.length)return;
+        var runs=[],st=0;for(var i=1;i<=SF.length;i++){if(i===SF.length||SF[i].cat!==SF[st].cat){runs.push({cat:SF[st].cat,col:SF[st].col,s:st,e:i-1});st=i;}}
+        ctx.save();
+        ctx.strokeStyle='#2a2a3a';ctx.lineWidth=1;
+        runs.forEach(function(r,idx){if(idx===0||!meta.data[r.s]||!meta.data[r.s-1])return;var yTop=(meta.data[r.s].y+meta.data[r.s-1].y)/2;ctx.beginPath();ctx.moveTo(6,yTop);ctx.lineTo(A.right,yTop);ctx.stroke();});
+        var rowH=meta.data.length>1?Math.abs(meta.data[1].y-meta.data[0].y):22;
+        runs.forEach(function(r){if(!meta.data[r.s]||!meta.data[r.e])return;var y0=meta.data[r.s].y,y1=meta.data[r.e].y,yMid=(y0+y1)/2;
+          ctx.strokeStyle=r.col;ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(9,y0-rowH*0.35);ctx.lineTo(9,y1+rowH*0.35);ctx.stroke();
+          ctx.fillStyle=r.col;ctx.font='700 12px -apple-system,sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';
+          var avail=(r.e-r.s+1)*rowH-4, name=r.cat;
+          if(ctx.measureText(name).width>avail){name=name.split(' ')[0];while(ctx.measureText(name).width>avail&&name.length>2){name=name.slice(0,-1);}}
+          ctx.save();ctx.translate(23,yMid);ctx.rotate(-Math.PI/2);ctx.fillText(name,0,0);ctx.restore();});
+        ctx.restore();}};
+      var _rawMax=0; SF.forEach(function(s){ if(s.cur>_rawMax)_rawMax=s.cur; if(s.ttm!=null&&s.ttm>_rawMax)_rawMax=s.ttm; });
+      function _niceStep(x){var e=Math.pow(10,Math.floor(Math.log(Math.max(1,x))/Math.LN10)),f=x/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e;}
+      var _sStep=_niceStep(Math.max(1,_rawMax)/5), _smax=Math.max(_sStep,Math.ceil(_rawMax/_sStep)*_sStep);
+      makeChart('subcat',{type:'bar',plugins:[diaArrow,groupLabels],data:{labels:SF.map(function(s){return s.l2;}),datasets:[{data:SF.map(function(s){return s.cur;}),backgroundColor:SF.map(function(s){return s.col;}),borderRadius:3,barPercentage:.78,xAxisID:'x'}]},options:{indexAxis:'y',maintainAspectRatio:false,barLabelMax:0,layout:{padding:{left:40,right:52}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){var s=SF[c.dataIndex];return s.cat+' · this month '+gbp(s.cur)+' · 12-mo avg '+gbp(s.ttm);}}}},scales:{x:{position:'bottom',min:0,max:_smax,grid:{color:CC.grid},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},x2:{position:'top',min:0,max:_smax,grid:{display:false},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},y:{grid:{display:false},ticks:{color:'#d8d8e2',font:{size:12}}}}}});
+    }
+    // per-category small multiples: monthly actual bars + 3-mo MA line
+    var SM=window.__sm, sg=document.getElementById('smgrid');
+    if(SM&&sg){ sg.innerHTML='';
+      var _hd=SM.hasData||{};
+      SM.cats.forEach(function(c){ if(!SM.series[c])return; var card=document.createElement('div'); card.className='smcard';
+        card.innerHTML='<div class="smt" style="color:'+SM.col[c]+'">'+c+'</div><div class="smc"><canvas></canvas></div>'; sg.appendChild(card);
+        var _act=SM.series[c].actual.map(function(v,i){return _hd[SM.csm[i]]?v:null;});
+        var _ma=SM.series[c].ma3.map(function(v,i){return _hd[SM.csm[i]]?v:null;});
+        new Chart(card.querySelector('canvas'),{plugins:[quarterSep],data:{labels:SM.csm,datasets:[{type:'bar',data:_act,backgroundColor:SM.col[c]+'55',order:2},{type:'line',data:_ma,borderColor:SM.col[c],borderWidth:2,tension:.3,pointRadius:0,spanGaps:false,order:1}]},options:{maintainAspectRatio:false,barLabelMax:0,plugins:{legend:{display:false},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c2){return gbp(c2.raw);}}}},scales:{x:{display:true,grid:{color:GRIDM},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:qTick}},y:{display:true,grid:{color:'#1e1e2a'},ticks:{color:'#9a9aa8',font:{size:12},maxTicksLimit:4,callback:kTick}}}}});
+      });
+    }
+    try{ if(window.__pvRewrap) window.__pvRewrap(); }catch(e){}
+  }
+  window.__renderAnalyst=renderAnalyst;
+  function update(wb){
+    var AC=wb.Sheets['Accounts']; if(!AC)throw new Error('no Accounts tab');
+    var DB=wb.Sheets['Dashboard'];
+    var sec=readAccounts(AC);
+    var networth=findByLabel(AC,'net worth','D'),gross=findByLabel(AC,'gross assets','D'),liab=findByLabel(AC,'total liabilities','D'),liquid=findByLabel(AC,'total liquid','D'),inv=findByLabel(AC,'total investments','D');
+    if(networth==null&&sec.INVESTMENTS.length===0){alert('This workbook has no saved values yet — open it in Excel, press Save once, then Load again.');return;}
+    _cfgCache=null;   // re-read Config on every load, incl. after switching workbook
+    var CFG=readConfig(wb); setLocaleFrom(CFG);
+    var cash=sumA(sec.CASH),sav=sumA(sec.SAVINGS),ref=sumA(sec['REFUNDS DUE']);
+    // Net liquid assets deduct only SHORT-TERM liabilities. Accounts column E holds a DUE DATE:
+    // due within 12 months = short-term (deducted); a far-off or blank date = long-term (excluded, e.g. mortgage).
+    // A legacy 'S'/'L' text flag in column E is still honoured as a fallback.
+    var NOWT=Date.now(), YR_MS=365*864e5;
+    function liabDueDate(x){return toDate(x[2]);}
+    function liabShortTerm(x){var dd=liabDueDate(x); if(dd) return (dd.getTime()-NOWT)<=YR_MS;
+      if(typeof x[2]==='string'){var u=x[2].trim().toUpperCase(); if(u==='S')return true; if(u==='L')return false;}
+      return false;}
+    var stLiab=sec.LIABILITIES.filter(liabShortTerm).reduce(function(t,x){return t+x[1];},0);
+    var ltLiab=liab-stLiab; var netliq=liquid-stLiab;
+    STATE.networth=networth;STATE.gross=gross;STATE.netliq=netliq;STATE.stLiab=stLiab;STATE.ltLiab=ltLiab;STATE.reserve=cash+sav;
+    STATE.salary=(DB?findByLabel(DB,'net pay','B'):null)||0;STATE.goal=DB?findByLabel(DB,'cash reserve goal','B'):null;
+    // "Where the wealth sits" composition — from Config WEALTH GROUPS, else generic keyword defaults. Fully data-driven, no personal keys in code.
+    (function(){
+      var groups=CFG.groups.length?CFG.groups:[
+        {match:['company','stake','shareholding','equity'],label:'Company stake',color:'#a78bfa'},
+        {match:['pension','sipp','retire','annuity'],label:'Pension',color:'#f59e0b'},
+        {match:['home','property'],label:'Home',color:'#5b9cf6'}];
+      var inv=sec.INVESTMENTS.slice(), used={}, comp=[];
+      groups.forEach(function(g){var sum=0; inv.forEach(function(x,xi){var ln=(x[0]||'').toLowerCase(); if(!used[xi]&&g.match.some(function(kw){return kw&&ln.indexOf(kw)>=0;})){sum+=x[1];used[xi]=1;}}); if(sum>0)comp.push([g.label,g.color||'#8a8a9a',sum]);});
+      var other=0; inv.forEach(function(x,xi){if(!used[xi])other+=x[1];});
+      if(other>0)comp.push(['Other investments','#2dd4bf',other]);
+      var liq=(cash+sav); if(liq>0)comp.push(['Liquid','#4ade80',liq]);
+      STATE.wealthComp=comp;
+      var largest=null; inv.forEach(function(x){if(!largest||x[1]>largest[1])largest=x;}); STATE.largestHolding=largest;
+    })();
+    // balance sheet
+    var bs=document.getElementById('bsWrap');
+    if(bs){var rows=function(arr){return arr.map(function(x){return '<div class="bs-row"><span>'+x[0]+'</span><span>'+gbp(x[1])+'</span></div>';}).join('');};
+      bs.innerHTML='<div class="bs-title">Balance Sheet &mdash; live</div><div class="bs-h">ASSETS</div>'+
+        '<div class="bs-grp">Cash &amp; bank</div>'+rows(sec.CASH)+
+        '<div class="bs-grp">Savings</div>'+rows(sec.SAVINGS)+
+        '<div class="bs-grp">Refunds due</div>'+rows(sec['REFUNDS DUE'])+
+        '<div class="bs-sub"><span>Current assets</span><span>'+gbp(liquid)+'</span></div>'+
+        '<div class="bs-grp">Investments &amp; long-term</div>'+rows(sec.INVESTMENTS)+
+        '<div class="bs-sub"><span>Investments</span><span>'+gbp(inv)+'</span></div>'+
+        '<div class="bs-tot"><span>Total assets</span><span>'+gbp(gross)+'</span></div>'+
+        '<div class="bs-h">LIABILITIES</div>'+
+        sec.LIABILITIES.map(function(x){var s=liabShortTerm(x),dd=liabDueDate(x);var dstr=dd?" &middot; "+dd.toLocaleDateString(LOC,{month:'short',year:'2-digit'}):'';var fl='<span style="color:'+(s?'#5b9cf6':'#f59e0b')+';font-size:12px;font-weight:700;margin-left:6px">'+(s?'ST':'LT')+dstr+'</span>';return '<div class="bs-row"><span>'+x[0]+fl+'</span><span>'+gbp(x[1])+'</span></div>';}).join('')+
+        '<div class="bs-sub"><span>Short-term liabilities</span><span>('+gbp(stLiab)+')</span></div>'+
+        '<div class="bs-sub"><span>Long-term liabilities</span><span>('+gbp(ltLiab)+')</span></div>'+
+        '<div class="bs-tot"><span>Total liabilities</span><span>('+gbp(liab)+')</span></div>'+
+        '<div class="bs-nw"><span>NET WORTH</span><span>'+gbp(networth)+'</span></div>';}
+    var LL=sec.LIABILITIES.map(function(x){return x[0];}),LV=sec.LIABILITIES.map(function(x){return x[1];});
+    /* One liability usually dwarfs the rest (a mortgage, a big loan) and flattens
+       the chart. Split the largest onto its own upper axis when it is more than
+       3x the next largest — a data rule, so it works whatever the debt is called. */
+    var _ord=LV.map(function(v,i){return [v,i];}).sort(function(a,b){return b[0]-a[0];});
+    var mi=(_ord.length>1&&_ord[0][0]>3*_ord[1][0])?_ord[0][1]:-1;
+    var _bigName=mi>=0?LL[mi]:'';
+    makeChart('liabMix',{type:'bar',data:{labels:LL,datasets:[
+        {label:'Other liabilities (lower axis)',data:LV.map(function(v,i){return i===mi?null:v;}),backgroundColor:CC.red,borderRadius:3,xAxisID:'x'},
+        {label:_bigName+' (upper axis)',data:LV.map(function(v,i){return i===mi?v:null;}),backgroundColor:CC.amber,borderRadius:3,xAxisID:'x2'}]},
+      options:{maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:52}},
+        plugins:{legend:{display:true,labels:{boxWidth:9,font:{size:12},color:'#999'}},tooltip:{callbacks:{label:function(c){return c.dataset.label.split(' (')[0]+': '+gbp(c.raw);}}}},
+        scales:{x:{position:'bottom',grid:{color:CC.grid},ticks:{color:CC.red,font:{size:12},callback:kTick}},
+          x2:{position:'top',grid:{display:false},ticks:{color:CC.amber,font:{size:12},callback:kTick}},
+          y:{grid:{display:false},ticks:{color:'#ccc',font:{size:12}}}}}});
+    // bills
+    var bills=readBills(wb.Sheets['Bills']); var billTot=bills.reduce(function(t,b){return t+b.amt;},0);
+    /* Bills that merely repay a card move money between your own accounts. Which
+       bills those are is a Config ACCOUNT GROUPS row ("role" = card repayment),
+       not a list of bank names in the code. */
+    var _cardKw=(CFG.accounts.filter(function(a){return a.role.indexOf('card')>=0;})[0]||{match:['card']}).match;
+    STATE.billTot=billTot;STATE.cardPay=bills.filter(function(b){var l=b.n.toLowerCase();
+      return _cardKw.some(function(kw){return kw&&l.indexOf(kw)>=0;});}).reduce(function(t,b){return t+b.amt;},0);
+    var tb=document.getElementById('billsDueBody');
+    if(tb){var today=new Date(); var td=today.getDate();
+      var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var sorted=bills.slice().sort(function(a,b){return a.day-b.day;});
+      var leftTot=0,paidTot=0;
+      var body=sorted.map(function(b){
+        var paid=(b.day<td); if(paid){paidTot+=b.amt;}else{leftTot+=b.amt;}
+        var du=b.day-td;
+        var when=paid?'<span style="color:#4ade80">Paid &#10003;</span>'
+          :String(b.day).padStart(2,'0')+' '+mons[today.getMonth()]+((du>=0&&du<=4)?' &middot; '+du+'d':'');
+        return '<tr style="'+(paid?'opacity:0.45;':'')+'"><td class="name">'+b.n+'</td><td class="num">'+gbp(b.amt)+'</td><td class="num">'+b.day+'</td><td class="num" style="color:'+(paid?'#4ade80':(du<=4?'#f87171':'#888'))+'">'+when+'</td></tr>';}).join('');
+      tb.innerHTML=body
+        +'<tr style="border-top:1px solid #2a2a3a"><td class="name" style="color:#fbbf24;font-weight:600">Left to pay this month</td><td class="num" style="color:#fbbf24;font-weight:600">'+gbp(leftTot)+'</td><td class="num"></td><td class="num" style="color:#666">'+gbp(paidTot)+' paid</td></tr>'
+        +'<tr><td class="name" style="color:#888">Total monthly</td><td class="num" style="color:#a78bfa">'+gbp(billTot)+'</td><td class="num"></td><td class="num"></td></tr>';
+      var blh=document.getElementById('billsLeftHdr'); if(blh) blh.innerHTML=gbp(leftTot)+' left';}
+    // cash reserve + long-run history
+    var hist=null;
+    try{ hist=readHistorical(wb.Sheets['Historical']); }catch(e){ console.warn('historical read failed',e); }
+    try{updateWishlist(wb);}catch(e){console.warn("wishlist live failed",e);}
+    _wb=wb;_bills=bills;_billTot=billTot;try{updateSpending(wb,bills,billTot);}catch(e){console.warn("spending live failed",e);}
+    try{ if(DB) buildForecast(wb,sec,bills,billTot,DB,cash,sav); }catch(e){console.warn('forecast build failed',e);}
+    // stamp
+    var _own=document.getElementById('ownerName');
+    if(_own) _own.textContent=CFG.set.owner?(CFG.set.owner+' · '):'';
+    var da=document.getElementById('dataAsOf');
+    if(da){da.textContent='loaded '+new Date().toLocaleString(LOC,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});da.style.color='#4ade80';}
+    var eb=document.getElementById('emptyBanner'); if(eb) eb.style.display='none';
+    var st=document.getElementById('loadWb'); if(st){st.textContent='Reload workbook'; st.style.color='#4ade80'; st.style.borderColor='#4ade80';}
+    window.__hist=hist; try{renderOverview(wb,hist);}catch(e){console.warn('overview failed',e);}
+    try{ var _an=document.getElementById('analyst'); if(_an&&_an.style.display!=='none') renderAnalyst(); }catch(e){console.warn('analyst failed',e);}
+    try{ if(window.__pvRewrap) window.__pvRewrap(); }catch(e){}
+  }
+
+  function updateWishlist(wb){
+    var WS=wb.Sheets['Wish List']; var box=document.getElementById('wlInner'); if(!WS||!box) return;
+    var v=function(a){var c=WS[a];return c?c.v:null;};
+    var netliq=findByLabel(WS,'net liquidity','B'),prov=findByLabel(WS,'provisions','B'),free=findByLabel(WS,'free cash','B'),ratio=findByLabel(WS,'affordability ratio','B');
+    var items=[]; var rng=XLSX.utils.decode_range(WS['!ref']);
+    var startR=23; for(var hr=1;hr<=rng.e.r+1;hr++){var h=v('A'+hr); if(typeof h==='string'&&h.trim().toLowerCase()==='id'){startR=hr+1;break;}}
+    for(var r=startR;r<=rng.e.r+1;r++){var id=v('A'+r); if(!id)continue;
+      items.push({id:id,item:v('B'+r),cat:v('C'+r),cost:v('D'+r),verdict:v('T'+r)});}
+    var cls=function(x){x=(x||'').toString();return x.indexOf('OK')===0?'#4ade80':x.indexOf('Hold')===0?'#5b9cf6':'#fbbf24';};
+    var head='<div style="font-size:12px;color:#888;margin-bottom:8px;">Net liquidity '+gbp(netliq)+' &minus; provisions '+gbp(prov)+' = <b style="color:#4ade80">free cash '+gbp(free)+'</b> &middot; gate '+Math.round((ratio||0)*100)+'% &rarr; max single '+gbp((free||0)*(ratio||0))+'</div>';
+    var rows=items.map(function(i){return '<tr><td class="name">'+(i.item||'')+'</td><td>'+(i.cat||'')+'</td><td class="num">'+gbp(i.cost)+'</td><td style="color:'+cls(i.verdict)+';font-weight:600;white-space:nowrap">'+(i.verdict||'')+'</td></tr>';}).join('');
+    box.innerHTML=head+'<table><thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Verdict</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  }
+
+  function updateSpending(wb,bills,billTot){ var TH=readConfig(wb).set;
+    var SH=wb.Sheets['Transactions']; if(!SH) return;
+    var A=XLSX.utils.sheet_to_json(SH,{header:1});
+    var tx=[];
+    for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue;
+      tx.push({m:String(r[1]),desc:String(r[3]||''),amt:(+r[4]||0),l1:r[5]||'',l2:r[6]||'',bk:r[7]||''});}
+    if(!tx.length) return;
+    // Categories + colours: from Config CATEGORIES if present, else auto-derived from the ledger (palette by spend). No category names hardcoded.
+    var _CFG=readConfig(wb), CATCOL={}, CATS;
+    if(_CFG.cats.length){ CATS=_CFG.cats.map(function(x){return x.name;}); _CFG.cats.forEach(function(x){CATCOL[x.name]=x.color;}); }
+    else {
+      var _PAL=['#5b9cf6','#2dd4bf','#4ade80','#a78bfa','#f472b6','#f87171','#fbbf24','#60a5fa','#34d399','#c4b5fd','#fb923c','#f59e0b'];
+      var _EXC={Transfer:1,Income:1,Savings:1,REVIEW:1}, _tot={};
+      tx.forEach(function(t){ if(t.l1&&!_EXC[t.l1]&&t.bk==='Recurring') _tot[t.l1]=(_tot[t.l1]||0)+t.amt; });
+      CATS=Object.keys(_tot).sort(function(a,b){return _tot[b]-_tot[a];});
+      if(!CATS.length){var _s={};tx.forEach(function(t){if(t.l1&&!_EXC[t.l1])_s[t.l1]=1;});CATS=Object.keys(_s).sort();}
+      CATS.forEach(function(c,i){CATCOL[c]=_PAL[i%_PAL.length];});
+    }
+    var mset={}; tx.forEach(function(t){mset[t.m]=1;});
+    var monthsData=Object.keys(mset).sort();
+    var hasData={}; monthsData.forEach(function(m){hasData[m]=1;});
+    // continuous calendar-month axis (fills any gap month so it still appears on the x-axis; its Y stays null) (fix #1)
+    var months=monthsData.length?contRange(monthsData[0],monthsData[monthsData.length-1]):[];
+    // resolve the view month: selector override, else Expenses reporting month, else latest with data
+    var _repM=null; try{var _EXm=wb.Sheets['Expenses']; _repM=_EXm?findByLabel(_EXm,'reporting month','B'):null;}catch(e){}
+    var _defM=(typeof _repM==='string'&&/^\d{4}-\d{2}$/.test(_repM))?_repM:months[months.length-1];
+    if(!_viewMonth||months.indexOf(_viewMonth)<0)_viewMonth=_defM;
+    var curM=_viewMonth;
+    (function(){var sel=document.getElementById('monthSel'),ctl=document.getElementById('monthCtl'); if(!sel)return;
+      if(sel.options.length!==months.length){ sel.innerHTML=months.map(function(m){return '<option value="'+m+'">'+m+'</option>';}).join(''); }
+      sel.value=curM; if(ctl)ctl.style.display='inline-flex';})();
+    var win=months.slice(-12), W={}; win.forEach(function(m){W[m]=1;});
+    var by1={},by2={},bymon={},merch={},oneoff={},rec_tot=0;
+    win.forEach(function(m){bymon[m]=0;});
+    tx.forEach(function(t){
+      if(W[t.m]){
+        if(t.bk==='Recurring'){by1[t.l1]=(by1[t.l1]||0)+t.amt; var k=t.l1+' / '+t.l2; by2[k]=(by2[k]||0)+t.amt; bymon[t.m]+=t.amt; rec_tot+=t.amt;}
+        else if(t.bk==='One-off'){oneoff[t.desc]=(oneoff[t.desc]||0)+t.amt;}
+        if(t.amt>0) merch[t.desc]=(merch[t.desc]||0)+t.amt;
+      }
+    });
+    var income=0,savings=0;
+    tx.forEach(function(t){if(W[t.m]){if(t.bk==='Income')income+=-t.amt; if(t.bk==='Savings')savings+=t.amt;}});
+    var oneoff_tot=0; for(var k in oneoff) oneoff_tot+=oneoff[k];
+    STATE.recMo=Math.round(rec_tot/12);STATE.recTTM=rec_tot;STATE.income=income;STATE.savings=savings;STATE.oneoff=oneoff_tot;
+    function top(o,n){return Object.keys(o).map(function(k){return [k,o[k]];}).sort(function(a,b){return b[1]-a[1];}).slice(0,n);}
+    var by1s=top(by1,12), by2s=top(by2,12), topm=top(merch,15);
+    // stat cards
+    // charts
+    var GR={grid:'#1e1e2a',tick:'#666'};
+    // monthly time series (like the 3-mo MA chart) for the two charts below
+    /* Optional Config!SETTINGS "History from" (YYYY-MM) trims the long-run charts;
+       blank = use everything in the ledger. Was a hardcoded 2023-01 floor. */
+    var _from=(_CFG.set.historyFrom||'');
+    var csmT=months.filter(function(m){return !_from||m>=_from;}); var csmIdx={}; csmT.forEach(function(m,i){csmIdx[m]=i;});
+    var EXCLm={Transfer:1,Income:1,Savings:1,REVIEW:1};
+    var catMon={}; CATS.forEach(function(c){catMon[c]=csmT.map(function(){return 0;});});
+    tx.forEach(function(t){ if(t.bk!=='Recurring'||!t.l1||csmIdx[t.m]==null)return;
+      if(CATS.indexOf(t.l1)>=0) catMon[t.l1][csmIdx[t.m]]+=t.amt; });
+    var monLbl0=function(ym){var p=String(ym).split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+p[1]||1)-1]+" '"+p[0].slice(2);};
+    window.__cat={catMon:catMon,labels:csmT.map(monLbl0),monthsYM:csmT,curM:curM,cats:CATS,col:CATCOL,hasData:hasData};
+    // per-category actual + 3-month moving average, over the configured history window
+    var csm=months.filter(function(m){return !_from||m>=_from;});
+    var series={};
+    CATS.forEach(function(c){
+      var act=csm.map(function(m){var s=0;tx.forEach(function(t){if(t.m===m&&t.l1===c&&t.bk==='Recurring')s+=t.amt;});return Math.round(s);});
+      var ma=act.map(function(_,i){return i<2?null:Math.round((act[i]+act[i-1]+act[i-2])/3);});
+      series[c]={actual:act,ma3:ma};
+    });
+    // stash per-category small-multiples data for the curated Analyst view
+    window.__sm={cats:CATS,csm:csm,series:series,col:CATCOL,hasData:hasData};
+    // stash subcategory data (this-month value, trailing-12mo avg, trend) for the single combined Analyst chart; excludes mortgage/transfers
+    (function(){
+      var EXCLS={Transfer:1,Income:1,Savings:1,REVIEW:1}, perMon={};
+      tx.forEach(function(t){ if(!t.l1||EXCLS[t.l1]||t.bk!=='Recurring')return; var l2=t.l2||'(uncategorised)';
+        (perMon[t.l1]=perMon[t.l1]||{}); (perMon[t.l1][l2]=perMon[t.l1][l2]||{}); perMon[t.l1][l2][t.m]=(perMon[t.l1][l2][t.m]||0)+t.amt; });
+      var compM=months.filter(function(m){return m<curM;}), wA=compM.slice(-12), wB=compM.slice(-13,-1);
+      function avgOver(l1,l2,win){var s=0;win.forEach(function(m){s+=(perMon[l1]&&perMon[l1][l2]&&perMon[l1][l2][m])||0;});return s/12;}
+      function cmv(l1,l2){return (perMon[l1]&&perMon[l1][l2]&&perMon[l1][l2][curM])||0;}
+      var gord=catOrder(Object.keys(perMon));
+      var flat=[];
+      gord.forEach(function(g){ var col=CATCOL[g]||'#888';
+        var subs=Object.keys(perMon[g]).filter(function(l2){return Math.abs(cmv(g,l2))>0.005||Math.abs(avgOver(g,l2,wA))>0.005;});
+        subs.sort(function(a,b){return a.toLowerCase().localeCompare(b.toLowerCase());});
+        subs.forEach(function(l2){ var cur=Math.round(cmv(g,l2)), ttm=Math.round(avgOver(g,l2,wA));
+          var d=avgOver(g,l2,wA)-avgOver(g,l2,wB), tr=Math.abs(d)<0.5?0:(d>0?1:-1);
+          flat.push({cat:g,l2:l2,cur:cur,ttm:ttm,tr:tr,col:col}); }); });
+      window.__subflat=flat;
+    })();
+    var thickZero={id:'thickZero',afterDraw:function(ch){var ys=ch.scales.y;if(!ys)return;var yp=ys.getPixelForValue(0),A=ch.chartArea,ctx=ch.ctx;if(!isFinite(yp))return;ctx.save();ctx.strokeStyle='#8a8a9a';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(A.left,yp);ctx.lineTo(A.right,yp);ctx.stroke();ctx.restore();}};
+    var sg=document.getElementById('smgrid');
+    if(sg){sg.innerHTML=''; CATS.forEach(function(c){
+      var card=document.createElement('div'); card.className='smcard';
+      card.innerHTML='<div class="smtitle">'+c+'</div><canvas></canvas>'; sg.appendChild(card);
+      new Chart(card.querySelector('canvas'),{data:{labels:csm,datasets:[
+        {type:'bar',data:series[c].actual,backgroundColor:'#33334a',order:2},
+        {type:'line',data:series[c].ma3,borderColor:CATCOL[c],borderWidth:2,tension:0.3,pointRadius:0,spanGaps:true,order:1}]},
+        options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c2){return gbp(c2.raw);}}}},scales:{x:{grid:{display:false},ticks:{color:'#999',maxTicksLimit:6,font:{size:12}}},y:{grid:{color:GR.grid},ticks:{color:'#999',font:{size:12},callback:kTick}}}}});
+    });}
+    // budget vs actual: budgets from the Expenses sheet, ACTUALS recomputed from the ledger for the view month
+    var EX=wb.Sheets['Expenses'];
+    if(EX){var vrows=[];var repMonth=curM;   // view month (selector-driven), not the sheet's fixed reporting month
+      // scan the category block by label (Category header -> Total) so added rows are picked up automatically
+      var rrE=rowsOf(EX),startedE=false;
+      for(var r2=rrE[0];r2<=rrE[1];r2++){var cat=V(EX,'A'+r2);
+        if(typeof cat==='string'&&cat.trim().toLowerCase()==='category'){startedE=true;continue;}
+        if(!startedE)continue;
+        if(typeof cat==='string'&&cat.trim().toLowerCase()==='total')break;
+        var bud=V(EX,'B'+r2);
+        if(typeof cat==='string'&&cat.trim()&&typeof bud==='number')vrows.push({cat:cat.trim(),budget:+bud||0,actual:0});}
+      // actuals per category from the ledger for the selected month (recurring spend by List 1)
+      var actByCat={}; tx.forEach(function(t){ if(t.m===curM&&t.bk==='Recurring'&&t.l1){ actByCat[t.l1]=(actByCat[t.l1]||0)+t.amt; }});
+      vrows.forEach(function(rr){ rr.actual=Math.round((actByCat[rr.cat]||0)*100)/100; });
+      // category order comes from Config CATEGORIES, so it matches every other view
+      var _ord=catOrder(vrows.map(function(r){return r.cat;}));
+      vrows.sort(function(a,b){return _ord.indexOf(a.cat)-_ord.indexOf(b.cat);});
+      window.__bva={rows:vrows.map(function(r){return {cat:r.cat,budget:r.budget,actual:r.actual};}),month:curM};
+      var budget_total=vrows.reduce(function(t,r){return t+r.budget;},0), actual_total=vrows.reduce(function(t,r){return t+r.actual;},0);
+      // proportional-pace: fraction of the reporting month elapsed, then actual vs that day-proportional allowance
+      var nowB=new Date(), curYM=nowB.getFullYear()+'-'+String(nowB.getMonth()+1).padStart(2,'0');
+      var dimB=new Date(nowB.getFullYear(),nowB.getMonth()+1,0).getDate(), frac=nowB.getDate()/dimB;
+      if(typeof repMonth==='string'&&/^\d{4}-\d{2}$/.test(repMonth)){ if(repMonth<curYM)frac=1; else if(repMonth>curYM)frac=1/dimB; }
+      var pace=vrows.map(function(r){var allow=r.budget*frac; return allow>0?(r.actual/allow*100):null;});
+      var pctElapsed=Math.round(frac*100);
+      STATE.budgetTotal=budget_total;STATE.actualTotal=actual_total;STATE.pctElapsed=pctElapsed;STATE.pace=(budget_total*frac)>0?Math.round(actual_total/(budget_total*frac)*100):0;STATE.repMonth=repMonth;
+    }
+  }
+
+
+  var fi=document.getElementById('wbFile');
+  document.getElementById('loadWb').onclick=function(){fi.click();};
+  fi.onchange=function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
+    rd.onload=function(ev){try{var wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});update(wb);
+      setTimeout(function(){window.dispatchEvent(new Event('resize'));},80);
+    }catch(err){alert('Could not read that file: '+err.message);}};
+    rd.readAsArrayBuffer(f);};
+  // month selector: re-render the Spending views (Budget vs Actual + Expenses by Subcategory) for the chosen month
+  (function(){var sel=document.getElementById('monthSel'),prev=document.getElementById('mPrev'),next=document.getElementById('mNext');
+    function go(m){ if(!_wb)return; _viewMonth=m; try{updateSpending(_wb,_bills,_billTot);}catch(e){console.warn('month switch failed',e);}
+      try{if(typeof renderOverview==='function')renderOverview(_wb,window.__hist);}catch(e){}
+      try{var _an=document.getElementById('analyst'); if(_an&&_an.style.display!=='none'&&window.__renderAnalyst)window.__renderAnalyst();}catch(e){}
+      setTimeout(function(){window.dispatchEvent(new Event('resize'));},60); }
+    if(sel)sel.addEventListener('change',function(){go(this.value);});
+    function step(d){ if(!sel||!sel.options.length)return; var i=sel.selectedIndex+d; if(i<0||i>=sel.options.length)return; sel.selectedIndex=i; go(sel.value); }
+    if(prev)prev.addEventListener('click',function(){step(-1);});
+    if(next)next.addEventListener('click',function(){step(1);});
+  })();
+})();
+</script>
+
+<script>
+/* ---- Help (?) badges: hover/click for a plain-language explanation of each panel ---- */
+(function(){
+  var H=[
+    ['net liquidity','Spendable cash after short-term debts, and progress toward your rebuild goal. At the shown monthly pace you reach the goal in the stated number of months.'],
+    ['cash-flow forecast','Projects your day-by-day balance for 12 months: opens from net liquid assets, adds net salary on payday, subtracts every dated direct-debit bill on its due day. The low point is what matters.'],
+    ['spending by category','Monthly recurring spend per category over the last 24 months ending at the selected month — one line per category. Toggle raw vs 3-month average; the y-axis and zero line stay fixed. Excludes one-off/capital, transfers, savings.'],
+    ['where the wealth sits','Your net worth split by where it is held — shows why liquid runway can be tight even when net worth is high.'],
+    ["where it's going",'This month’s actual spend per category vs budget. The % is spend against the day-proportional allowance (how far through the month you are). Click a row for the transactions.'],
+    ['month-end cash balance','Your running month-end cash position over time, from the Historical sheet.'],
+    ['savings rate','Net savings and investments each month as a percentage of your salary.'],
+    ['net savings','Money moved into savings and investments each month (contributions, not balances).'],
+    ['trailing-12-month average','Bars = this month’s spend per subcategory. The diamond marks the trailing-12-month average per month; the arrow shows whether that average rose (red) or fell (green) at the last month-close. Shared scale, mortgage excluded.'],
+    ['per category','Each category’s monthly recurring spend (bars) with its 3-month moving average (line).'],
+    ['balance sheet','A full snapshot of assets minus liabilities that sums to your net worth, driven by the Accounts sheet.'],
+    ['bills due','Your direct-debit bills with their collection days — what is still to leave the account this month.'],
+    ['where money is owed','Your liabilities ranked by size (mortgage on the upper axis, everything else on the lower).'],
+    ['affordability','Items you’re considering, gated by an affordability rule based on free cash after provisions.']
+  ];
+  function place(b){var tip=b.querySelector('.tip');if(!tip)return;var r=b.getBoundingClientRect();var tw=240,th=tip.offsetHeight||90;var left=Math.min(window.innerWidth-tw-8,Math.max(8,r.left+r.width/2-tw/2));var top=(r.top>th+14)?(r.top-th-8):(r.bottom+8);tip.style.left=left+'px';tip.style.top=top+'px';}
+  function inject(){
+    document.querySelectorAll('.ctitle, .sec-h, .bs-title, details.detail>summary').forEach(function(t){
+      if(t.querySelector('.help'))return; var txt=(t.textContent||'').toLowerCase();
+      for(var i=0;i<H.length;i++){ if(txt.indexOf(H[i][0])>=0){
+        var b=document.createElement('span'); b.className='help'; b.textContent='?';
+        var tip=document.createElement('span'); tip.className='tip'; tip.textContent=H[i][1];
+        b.appendChild(tip); t.appendChild(b);
+        b.addEventListener('mouseenter',function(){place(this);});
+        b.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();var open=this.classList.contains('open');document.querySelectorAll('.help.open').forEach(function(x){x.classList.remove('open');});if(!open){this.classList.add('open');place(this);}});
+        break;
+      }}
+    });
+  }
+  if(document.readyState!=='loading')inject(); else document.addEventListener('DOMContentLoaded',inject);
+  var deb; var mo=new MutationObserver(function(){clearTimeout(deb);deb=setTimeout(inject,180);});
+  try{mo.observe(document.body,{childList:true,subtree:true});}catch(e){}
+  document.addEventListener('click',function(){document.querySelectorAll('.help.open').forEach(function(x){x.classList.remove('open');});});
+})();
+</script>
+
+</body></html>

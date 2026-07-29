@@ -1,0 +1,30 @@
+# ── Never commit real financial data ─────────────────────────────
+# Your own workbook and any dashboards built from it stay local.
+*.xlsx
+*.xlsm
+*.xls
+*.csv
+# ...but DO ship the synthetic demo workbook and the blank template:
+!finance-tracker-SAMPLE.xlsx
+!finance-tracker-TEMPLATE.xlsx
+
+# Personal/generated dashboards (the published one is index.html only)
+Finance Tracker*.xlsx
+Finance Dashboard*.html
+Personal finances*.html
+
+# ── Test harness scratch ─────────────────────────────────────────
+# test_dashboard.py rewrites the CDN tags to local copies and drops
+# screenshots next to itself; none of that belongs in the repo.
+_test_*.html
+_shoot.html
+vendor_*.js
+shot_*.png
+
+# ── Tooling noise ────────────────────────────────────────────────
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+node_modules/
