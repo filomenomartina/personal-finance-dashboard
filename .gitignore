@@ -21,6 +21,10 @@ _shoot.html
 vendor_*.js
 shot_*.png
 
+# ── Retired code ─────────────────────────────────────────────────
+# Kept on disk for reference, not worth publishing.
+superseded/
+
 # ── Tooling noise ────────────────────────────────────────────────
 .DS_Store
 __pycache__/
