@@ -240,6 +240,7 @@ def build(blank):
     for k, v, hint in [
         ("Currency symbol", "£", "used everywhere, privacy mode included"),
         ("Locale", "en-GB", "date and number formatting, e.g. en-US, it-IT, de-DE"),
+        ("Language", "", "UI language: en, it, es, fr or de. Blank = follow the browser"),
         ("Owner", "" if blank else "Sample User", "shown in the header; blank to hide"),
         ("History from", "", "YYYY-MM — trims the long-run charts; blank = all data"),
     ]:

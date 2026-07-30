@@ -13,6 +13,10 @@ here and you're already conforming. Within that structure everything is yours:
 categories, subcategories, account names, currency, colours and groupings are all
 derived from what you type, so you never edit code to recategorise.
 
+The interface speaks **English, Italian, Spanish, French and German** — pick one from
+the header. Your own labels are never translated: a category you called `Groceries`
+stays `Groceries` in every language.
+
 **Your data never leaves your device.** The dashboard reads your workbook entirely
 in the browser (via [SheetJS](https://sheetjs.com/)); nothing is uploaded, embedded
 or transmitted. There is no server, no build step and no account. There is also a
@@ -65,6 +69,36 @@ where-money-is-owed / affordability panel.
 Every panel has a **?** badge with a plain-language explanation, and all the time
 series share a continuous monthly axis with quarter gridlines.
 
+## Languages
+
+The **Language** picker in the header switches the interface between English,
+Italian, Spanish, French and German, and remembers your choice for next time.
+
+Where the initial language comes from, in order:
+
+1. **Your last pick** in the header, if you have ever made one.
+2. **`Config!SETTINGS` → `Language`** (`en`, `it`, `es`, `fr` or `de`) — the
+   workbook's own default, useful when you share a template with someone.
+3. **Your browser's language**, if it is one of the five.
+4. English.
+
+Number, date and month-name formatting follow the chosen language — Italian shows
+`£1.234,56` and `30 lug 2026` — **unless** `Config!SETTINGS` names an explicit
+`Locale`, which always wins. That lets you read the interface in Italian while
+keeping British number formatting, or the reverse.
+
+Translated: every label, heading, help tooltip, chart legend, verdict and insight
+sentence. Not translated: anything that came out of your workbook — category and
+subcategory names, account names, wealth-group labels you defined yourself, and the
+version history in the release notes.
+
+### Adding a language
+
+The translation table lives in one `<script>` block near the top of the file. Add one
+entry to `LANGS`, copy the `en` block in `DICT` under your language code, translate the
+values, and add a fallback locale in `DEFLOC`. Nothing else in the file changes — no
+code path reads a language code directly.
+
 ## Putting your own numbers in
 
 Only two sheets are required — `Accounts` and `Transactions` — and within them only
@@ -99,7 +133,7 @@ looks and behaves, the optional `Config` sheet has five blocks:
 
 | Block | Controls |
 |---|---|
-| `SETTINGS` | Currency symbol, locale, the name in the header, how far back the long-run charts go |
+| `SETTINGS` | Currency symbol, locale, UI language, the name in the header, how far back the long-run charts go |
 | `WEALTH GROUPS` | How investment lines group into the wealth donut |
 | `CATEGORIES` | Colour and display order of your spending categories |
 | `ACCOUNT GROUPS` | Which bills are card repayments rather than purchases |
@@ -150,6 +184,15 @@ python3 test_dashboard.py index.html finance-tracker-SAMPLE.xlsx
 It prints every headline figure, how many rows each container drew, how many points
 each chart holds, and any console error or warning. Run it before and after a
 change; the numbers should match.
+
+`test_i18n.py` covers the translation layer: it loads the dashboard in all five
+languages, checks the figures are digit-for-digit identical while the surrounding
+words are not, switches language live through the header picker, and asserts that
+privacy mode still leaves no unblurred figure in any locale.
+
+```bash
+python3 test_i18n.py index.html finance-tracker-SAMPLE.xlsx
+```
 
 ## Tech
 

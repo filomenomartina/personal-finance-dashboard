@@ -120,12 +120,18 @@ can leave notes in the spare columns.
 | A (name) | B (value) | |
 |---|---|---|
 | `Currency symbol` | `£` | Used everywhere, privacy mode included |
-| `Locale` | `en-GB` | Date and number formatting — `en-US`, `it-IT`, `de-DE` … |
+| `Locale` | `en-GB` | Date and number formatting — `en-US`, `it-IT`, `de-DE` … Blank = follow the UI language |
+| `Language` | `it` | UI language: `en`, `it`, `es`, `fr`, `de`. Blank = follow the browser. A pick made in the header overrides this |
 | `Owner` | `Sample User` | Shown in the header; leave blank to hide |
 | `History from` | `2023-01` | `YYYY-MM`; trims the long-run charts. Blank = all data |
 
 Changing `Currency symbol` re-denominates the whole dashboard — there is no second
 place to edit, and privacy-mode blurring follows it automatically.
+
+`Language` sets which language the interface opens in; it never touches your own
+labels. `Locale` and `Language` are independent: leave `Locale` blank and number and
+date formatting follow the chosen language, or set it to pin formatting regardless
+of language.
 
 ### `WEALTH GROUPS`
 

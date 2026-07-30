@@ -1,5 +1,5 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Personal Finances — Dashboard</title>
+<title data-i18n="app.title">Personal Finances — Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <style>
@@ -152,67 +152,545 @@ details.detail[open]>summary::before{transform:rotate(90deg)}
 .appfooter a:hover{text-decoration:underline}
 </style></head>
 <body>
+<script>
+/* ---- i18n: UI language (EN/IT/ES/FR/DE). Owner data is never translated ----
+   Adding a language: append one entry to LANGS and one block to DICT with the
+   same keys. Nothing else in the file needs to change. Category and subcategory
+   names come from the workbook and are shown exactly as typed. --------------- */
+window.I18N=(function(){
+  var LANGS=[['en','English'],['it','Italiano'],['es','Español'],['fr','Français'],['de','Deutsch']];
+  /* Fallback locale per language — an explicit Config!SETTINGS "Locale" always wins. */
+  var DEFLOC={en:'en-GB',it:'it-IT',es:'es-ES',fr:'fr-FR',de:'de-DE'};
+  var DICT={
+  en:{
+    "app.title":"Personal Finances — Dashboard","app.h1":"Personal Finances",
+    "hdr.noWb":"no workbook loaded","hdr.month":"Month","hdr.prev":"Previous month","hdr.next":"Next month",
+    "hdr.load":"Load workbook","hdr.reload":"Reload workbook","hdr.lang":"Language","hdr.loadedAt":"loaded {x}",
+    "view.overview":"Overview","view.analyst":"Analyst",
+    "empty.banner":"No workbook loaded — nothing below is populated. Click <b style=\"color:#cfcfe0\">{load}</b> and choose your saved Finance Tracker <code>.xlsx</code>.",
+    "verdict.loadTitle":"Load your workbook","verdict.loadSub":"Click “{load}” to populate every figure below from your spreadsheet.",
+    "tile.safe":"Safe to spend · this month","tile.nw":"Net worth","tile.nl":"Net liquid",
+    "tile.nlSub":"cash + savings − short-term debt","tile.sr":"Savings rate","tile.srSub":"% of salary saved",
+    "tile.rw":"Cash runway","tile.rwSub":"liquid ÷ monthly outgoings",
+    "sec.whatChanged":"What changed · auto-detected","sec.savHist":"Savings & liquidity history",
+    "sec.expSub":"Expenses by subcategory","sec.perCat":"Per category — monthly actual (bars) + 3-month average (line)",
+    "sec.bsCommit":"Balance sheet & commitments","sec.relNotes":"Release notes",
+    "card.netliq":"Net liquidity — rebuild to goal",
+    "card.forecast":"12-month cash-flow forecast — will you dip below zero?",
+    "card.forecastHelp":"Opens from net liquid, adds salary on payday, drops each dated bill on its due day. The low point is what matters.",
+    "card.trend":"Spending by category — monthly",
+    "card.trendHelp":"One chart replaces the old four. Toggle smoothing; the y-axis stays fixed so the shape is comparable.",
+    "card.wealth":"Where the wealth sits","card.wealthHelp":"Why runway is tight despite a high net worth.",
+    "card.budget":"Where it's going this month — vs budget",
+    "card.budgetHelp":"Bar = spent vs day-proportional allowance. Click a category to see the transactions.",
+    "card.cashbal":"Month-end cash balance","card.cashbalHelp":"From the Historical sheet.",
+    "card.savrate":"Savings rate (% of salary) — monthly",
+    "card.netsav":"Net savings & investments — per month","card.netsavHelp":"Contributions, not balances.",
+    "card.subcat":"This month vs trailing-12-month average",
+    "card.subcatHelp":"Bar = this month · ◆ diamond = your 12-month average (the reference point) · arrow = trend vs that average. Excludes mortgage.",
+    "card.billsDue":"Bills due this month","card.owed":"Where money is owed",
+    "card.owedHelp":"Mortgage on the upper axis, everything else on the lower.",
+    "card.wish":"Wish list — affordability",
+    "btn.monthly":"Monthly","btn.ma3":"3-mo average",
+    "leg.avg12":"12-mo average","leg.above":"above average / rising","leg.below":"below average / falling",
+    "leg.liquid":"liquid","leg.inclPension":"incl. pension",
+    "det.bsSummary":"Itemised balance sheet, bills due, where money is owed & affordability — click to expand",
+    "det.relSummary":"Version history — click to expand",
+    "bs.title":"Balance Sheet","bs.titleLive":"Balance Sheet — live","bs.assets":"ASSETS",
+    "bs.cashBank":"Cash & bank","bs.savings":"Savings","bs.refunds":"Refunds due",
+    "bs.currentAssets":"Current assets","bs.investLT":"Investments & long-term","bs.investments":"Investments",
+    "bs.totalAssets":"Total assets","bs.liabilities":"LIABILITIES","bs.stLiab":"Short-term liabilities",
+    "bs.ltLiab":"Long-term liabilities","bs.totalLiab":"Total liabilities","bs.netWorth":"NET WORTH",
+    "bs.st":"ST","bs.lt":"LT",
+    "tbl.bill":"Bill","tbl.amount":"Amount","tbl.day":"Day","tbl.when":"When",
+    "tbl.version":"Version","tbl.date":"Date","tbl.changes":"Changes",
+    "bills.paid":"Paid ✓","bills.left":"Left to pay this month","bills.paidAmt":"{x} paid",
+    "bills.totalMonthly":"Total monthly","bills.leftHdr":"{x} left",
+    "wish.empty":"Add a <b>Wish List</b> sheet to your workbook to see affordability here.",
+    "wish.head":"Net liquidity {a} − provisions {b} = <b style=\"color:#4ade80\">free cash {c}</b> · gate {g}% → max single {m}",
+    "wish.item":"Item","wish.category":"Category","wish.cost":"Cost","wish.verdict":"Verdict",
+    "rel.note":"Add a new row here whenever the dashboard changes, so the history travels with the file.",
+    "foot.text":"All figures are read from your own workbook and stay in your browser — nothing is uploaded or embedded.",
+    "pv.hide":"🙈 Hide figures","pv.show":"👁 Show figures","pv.title":"Toggle privacy mode (H)",
+    "goal.prefix":"Goal {x}","goal.dash":"Goal —","goal.pct":"{p}% of goal",
+    "safe.used":"{used} of {budget} used","safe.days":"~{n} days left",
+    "d.vs3mo":"vs 3-mo","d.mom":"MoM","t.illiquid":"{p}% illiquid",
+    "u.mo":"mo","u.pt":"pt","u.d":"d",
+    "wealth.company":"Company stake","wealth.pension":"Pension","wealth.home":"Home",
+    "wealth.other":"Other investments","wealth.liquid":"Liquid",
+    "fc.low":"low {x}",
+    "ins.cat":"<b>{cat} {cur}</b> this month — {dir} {pct}% vs your 12-month average ({avg}).",
+    "ins.up":"up","ins.down":"down",
+    "ins.conc":"Wealth is concentrated: <b>{nw}</b> net worth, but only <b>{nl}</b> liquid",
+    "ins.concTail":" — {name} is {p}% of assets.",
+    "ins.streak":"<b>{n}-month saving streak</b> — you moved money to savings every month. Keep it going.",
+    "v.ontrack":"On track","v.watch":"Watch your cash this week",
+    "v.watchSub":"About {n} months of liquid runway","v.watchSafe":"{x} safe to spend this month",
+    "v.pace":"Spending ahead of pace","v.paceSub":"You've used {p}% of your day-proportional allowance this month.",
+    "v.okLeft":"{x} left to spend this month","v.okSaving":"saving {p}%","v.okPace":"{p}% of pace used",
+    "chart.otherLiab":"Other liabilities (lower axis)","chart.upperAxis":"{name} (upper axis)",
+    "tip.subcat":"{cat} · this month {cur} · 12-mo avg {ttm}",
+    "drill.title":"{cat} — {month} · {n} transactions · {total}",
+    "err.noValues":"This workbook has no saved values yet — open it in Excel, press Save once, then Load again.",
+    "err.read":"Could not read that file: ","misc.uncat":"(uncategorised)",
+    "help.netliq":"Spendable cash after short-term debts, and progress toward your rebuild goal. At the shown monthly pace you reach the goal in the stated number of months.",
+    "help.forecast":"Projects your day-by-day balance for 12 months: opens from net liquid assets, adds net salary on payday, subtracts every dated direct-debit bill on its due day. The low point is what matters.",
+    "help.trend":"Monthly recurring spend per category over the last 24 months ending at the selected month — one line per category. Toggle raw vs 3-month average; the y-axis and zero line stay fixed. Excludes one-off/capital, transfers, savings.",
+    "help.wealth":"Your net worth split by where it is held — shows why liquid runway can be tight even when net worth is high.",
+    "help.budget":"This month’s actual spend per category vs budget. The % is spend against the day-proportional allowance (how far through the month you are). Click a row for the transactions.",
+    "help.cashbal":"Your running month-end cash position over time, from the Historical sheet.",
+    "help.savrate":"Net savings and investments each month as a percentage of your salary.",
+    "help.netsav":"Money moved into savings and investments each month (contributions, not balances).",
+    "help.subcat":"Bars = this month’s spend per subcategory. The diamond marks the trailing-12-month average per month; the arrow shows whether that average rose (red) or fell (green) at the last month-close. Shared scale, mortgage excluded.",
+    "help.percat":"Each category’s monthly recurring spend (bars) with its 3-month moving average (line).",
+    "help.balancesheet":"A full snapshot of assets minus liabilities that sums to your net worth, driven by the Accounts sheet.",
+    "help.billsdue":"Your direct-debit bills with their collection days — what is still to leave the account this month.",
+    "help.owed":"Your liabilities ranked by size (mortgage on the upper axis, everything else on the lower).",
+    "help.afford":"Items you’re considering, gated by an affordability rule based on free cash after provisions."
+  },
+  it:{
+    "app.title":"Finanze personali — Cruscotto","app.h1":"Finanze personali",
+    "hdr.noWb":"nessun file caricato","hdr.month":"Mese","hdr.prev":"Mese precedente","hdr.next":"Mese successivo",
+    "hdr.load":"Carica file","hdr.reload":"Ricarica file","hdr.lang":"Lingua","hdr.loadedAt":"caricato {x}",
+    "view.overview":"Sintesi","view.analyst":"Analisi",
+    "empty.banner":"Nessun file caricato — nulla di seguito è popolato. Clicca <b style=\"color:#cfcfe0\">{load}</b> e scegli il tuo Finance Tracker <code>.xlsx</code>.",
+    "verdict.loadTitle":"Carica il tuo file","verdict.loadSub":"Clicca “{load}” per popolare ogni dato qui sotto dal tuo foglio di calcolo.",
+    "tile.safe":"Disponibile da spendere · questo mese","tile.nw":"Patrimonio netto","tile.nl":"Liquidità netta",
+    "tile.nlSub":"liquidità + risparmi − debiti a breve termine","tile.sr":"Tasso di risparmio","tile.srSub":"% dello stipendio risparmiata",
+    "tile.rw":"Autonomia di cassa","tile.rwSub":"liquidità ÷ uscite mensili",
+    "sec.whatChanged":"Cosa è cambiato · rilevato automaticamente","sec.savHist":"Storico risparmi e liquidità",
+    "sec.expSub":"Spese per sottocategoria","sec.perCat":"Per categoria — dato mensile (barre) + media a 3 mesi (linea)",
+    "sec.bsCommit":"Stato patrimoniale e impegni","sec.relNotes":"Note di rilascio",
+    "card.netliq":"Liquidità netta — ricostruzione verso l'obiettivo",
+    "card.forecast":"Previsione di cassa a 12 mesi — scenderai sotto zero?",
+    "card.forecastHelp":"Parte dalla liquidità netta, aggiunge lo stipendio il giorno di paga e scala ogni bolletta datata alla sua scadenza. Conta il punto minimo.",
+    "card.trend":"Spesa per categoria — mensile",
+    "card.trendHelp":"Un solo grafico al posto dei quattro precedenti. Attiva il livellamento; l'asse y resta fisso, così la forma è confrontabile.",
+    "card.wealth":"Dove si trova il patrimonio","card.wealthHelp":"Perché l'autonomia è limitata nonostante un patrimonio netto elevato.",
+    "card.budget":"Dove stanno andando i soldi questo mese — vs budget",
+    "card.budgetHelp":"Barra = speso vs quota proporzionale ai giorni trascorsi. Clicca una categoria per vedere le transazioni.",
+    "card.cashbal":"Saldo di cassa a fine mese","card.cashbalHelp":"Dal foglio Historical.",
+    "card.savrate":"Tasso di risparmio (% dello stipendio) — mensile",
+    "card.netsav":"Risparmi e investimenti netti — per mese","card.netsavHelp":"Versamenti, non saldi.",
+    "card.subcat":"Questo mese vs media degli ultimi 12 mesi",
+    "card.subcatHelp":"Barra = questo mese · ◆ rombo = la tua media a 12 mesi (il riferimento) · freccia = andamento rispetto a quella media. Esclude il mutuo.",
+    "card.billsDue":"Bollette in scadenza questo mese","card.owed":"Dove sono i debiti",
+    "card.owedHelp":"Il mutuo sull'asse superiore, tutto il resto su quello inferiore.",
+    "card.wish":"Lista desideri — sostenibilità",
+    "btn.monthly":"Mensile","btn.ma3":"Media 3 mesi",
+    "leg.avg12":"media 12 mesi","leg.above":"sopra la media / in aumento","leg.below":"sotto la media / in calo",
+    "leg.liquid":"liquido","leg.inclPension":"incl. pensione",
+    "det.bsSummary":"Stato patrimoniale dettagliato, bollette in scadenza, dove sono i debiti e sostenibilità — clicca per espandere",
+    "det.relSummary":"Cronologia versioni — clicca per espandere",
+    "bs.title":"Stato patrimoniale","bs.titleLive":"Stato patrimoniale — live","bs.assets":"ATTIVO",
+    "bs.cashBank":"Contanti e conti","bs.savings":"Risparmi","bs.refunds":"Rimborsi attesi",
+    "bs.currentAssets":"Attivo corrente","bs.investLT":"Investimenti e lungo termine","bs.investments":"Investimenti",
+    "bs.totalAssets":"Totale attivo","bs.liabilities":"PASSIVO","bs.stLiab":"Passività a breve termine",
+    "bs.ltLiab":"Passività a lungo termine","bs.totalLiab":"Totale passivo","bs.netWorth":"PATRIMONIO NETTO",
+    "bs.st":"BT","bs.lt":"LT",
+    "tbl.bill":"Bolletta","tbl.amount":"Importo","tbl.day":"Giorno","tbl.when":"Quando",
+    "tbl.version":"Versione","tbl.date":"Data","tbl.changes":"Modifiche",
+    "bills.paid":"Pagata ✓","bills.left":"Da pagare questo mese","bills.paidAmt":"{x} pagati",
+    "bills.totalMonthly":"Totale mensile","bills.leftHdr":"{x} da pagare",
+    "wish.empty":"Aggiungi un foglio <b>Wish List</b> al tuo file per vedere qui la sostenibilità.",
+    "wish.head":"Liquidità netta {a} − accantonamenti {b} = <b style=\"color:#4ade80\">cassa libera {c}</b> · soglia {g}% → massimo per acquisto {m}",
+    "wish.item":"Voce","wish.category":"Categoria","wish.cost":"Costo","wish.verdict":"Giudizio",
+    "rel.note":"Aggiungi una riga qui ogni volta che il cruscotto cambia, così la cronologia viaggia con il file.",
+    "foot.text":"Tutti i dati sono letti dal tuo file e restano nel tuo browser — nulla viene caricato online o incorporato.",
+    "pv.hide":"🙈 Nascondi importi","pv.show":"👁 Mostra importi","pv.title":"Attiva/disattiva modalità privacy (H)",
+    "goal.prefix":"Obiettivo {x}","goal.dash":"Obiettivo —","goal.pct":"{p}% dell'obiettivo",
+    "safe.used":"{used} di {budget} usati","safe.days":"~{n} giorni rimasti",
+    "d.vs3mo":"vs 3 mesi","d.mom":"su mese prec.","t.illiquid":"{p}% illiquido",
+    "u.mo":"mesi","u.pt":"pt","u.d":"g",
+    "wealth.company":"Quota societaria","wealth.pension":"Pensione","wealth.home":"Casa",
+    "wealth.other":"Altri investimenti","wealth.liquid":"Liquidità",
+    "fc.low":"minimo {x}",
+    "ins.cat":"<b>{cat} {cur}</b> questo mese — {dir} {pct}% rispetto alla tua media a 12 mesi ({avg}).",
+    "ins.up":"in aumento del","ins.down":"in calo del",
+    "ins.conc":"Il patrimonio è concentrato: <b>{nw}</b> di patrimonio netto, ma solo <b>{nl}</b> liquidi",
+    "ins.concTail":" — {name} vale il {p}% dell'attivo.",
+    "ins.streak":"<b>{n} mesi consecutivi di risparmio</b> — hai messo da parte denaro ogni mese. Continua così.",
+    "v.ontrack":"In linea","v.watch":"Attenzione alla liquidità questa settimana",
+    "v.watchSub":"Circa {n} mesi di autonomia liquida","v.watchSafe":"{x} disponibili da spendere questo mese",
+    "v.pace":"Spesa oltre il ritmo previsto","v.paceSub":"Hai usato il {p}% della tua quota proporzionale ai giorni trascorsi questo mese.",
+    "v.okLeft":"{x} ancora da spendere questo mese","v.okSaving":"risparmi il {p}%","v.okPace":"{p}% del ritmo usato",
+    "chart.otherLiab":"Altre passività (asse inferiore)","chart.upperAxis":"{name} (asse superiore)",
+    "tip.subcat":"{cat} · questo mese {cur} · media 12 mesi {ttm}",
+    "drill.title":"{cat} — {month} · {n} transazioni · {total}",
+    "err.noValues":"Questo file non contiene ancora valori salvati — aprilo in Excel, premi Salva una volta, poi ricaricalo.",
+    "err.read":"Impossibile leggere il file: ","misc.uncat":"(non categorizzato)",
+    "help.netliq":"Liquidità spendibile al netto dei debiti a breve termine, e avanzamento verso il tuo obiettivo di ricostruzione. Al ritmo mensile mostrato raggiungi l'obiettivo nel numero di mesi indicato.",
+    "help.forecast":"Proietta il tuo saldo giorno per giorno per 12 mesi: parte dalla liquidità netta, aggiunge lo stipendio netto il giorno di paga e sottrae ogni addebito datato alla sua scadenza. Conta il punto minimo.",
+    "help.trend":"Spesa ricorrente mensile per categoria negli ultimi 24 mesi fino al mese selezionato — una linea per categoria. Alterna dato grezzo e media a 3 mesi; l'asse y e la linea dello zero restano fissi. Esclude spese una tantum, trasferimenti e risparmi.",
+    "help.wealth":"Il tuo patrimonio netto suddiviso per dove è collocato — mostra perché l'autonomia liquida può essere limitata anche con un patrimonio netto elevato.",
+    "help.budget":"La spesa effettiva di questo mese per categoria rispetto al budget. La % è la spesa rispetto alla quota proporzionale ai giorni trascorsi. Clicca una riga per vedere le transazioni.",
+    "help.cashbal":"La tua posizione di cassa a fine mese nel tempo, dal foglio Historical.",
+    "help.savrate":"Risparmi e investimenti netti di ogni mese come percentuale del tuo stipendio.",
+    "help.netsav":"Denaro spostato in risparmi e investimenti ogni mese (versamenti, non saldi).",
+    "help.subcat":"Le barre sono la spesa di questo mese per sottocategoria. Il rombo segna la media mensile degli ultimi 12 mesi; la freccia indica se quella media è salita (rosso) o scesa (verde) all'ultima chiusura di mese. Scala condivisa, mutuo escluso.",
+    "help.percat":"La spesa ricorrente mensile di ogni categoria (barre) con la sua media mobile a 3 mesi (linea).",
+    "help.balancesheet":"Una fotografia completa di attivo meno passivo che somma al tuo patrimonio netto, guidata dal foglio Accounts.",
+    "help.billsdue":"I tuoi addebiti diretti con i giorni di prelievo — quanto deve ancora uscire dal conto questo mese.",
+    "help.owed":"Le tue passività ordinate per dimensione (il mutuo sull'asse superiore, tutto il resto su quello inferiore).",
+    "help.afford":"Le cose che stai valutando, filtrate da una regola di sostenibilità basata sulla cassa libera dopo gli accantonamenti."
+  },
+  es:{
+    "app.title":"Finanzas personales — Panel","app.h1":"Finanzas personales",
+    "hdr.noWb":"ningún archivo cargado","hdr.month":"Mes","hdr.prev":"Mes anterior","hdr.next":"Mes siguiente",
+    "hdr.load":"Cargar archivo","hdr.reload":"Recargar archivo","hdr.lang":"Idioma","hdr.loadedAt":"cargado {x}",
+    "view.overview":"Resumen","view.analyst":"Análisis",
+    "empty.banner":"Ningún archivo cargado — nada de lo siguiente está poblado. Haz clic en <b style=\"color:#cfcfe0\">{load}</b> y elige tu Finance Tracker <code>.xlsx</code>.",
+    "verdict.loadTitle":"Carga tu archivo","verdict.loadSub":"Haz clic en «{load}» para poblar cada cifra de abajo desde tu hoja de cálculo.",
+    "tile.safe":"Disponible para gastar · este mes","tile.nw":"Patrimonio neto","tile.nl":"Liquidez neta",
+    "tile.nlSub":"efectivo + ahorros − deuda a corto plazo","tile.sr":"Tasa de ahorro","tile.srSub":"% del salario ahorrado",
+    "tile.rw":"Autonomía de caja","tile.rwSub":"líquido ÷ gastos mensuales",
+    "sec.whatChanged":"Qué ha cambiado · detectado automáticamente","sec.savHist":"Histórico de ahorro y liquidez",
+    "sec.expSub":"Gastos por subcategoría","sec.perCat":"Por categoría — real mensual (barras) + media de 3 meses (línea)",
+    "sec.bsCommit":"Balance y compromisos","sec.relNotes":"Notas de versión",
+    "card.netliq":"Liquidez neta — recuperación hacia el objetivo",
+    "card.forecast":"Previsión de caja a 12 meses — ¿bajarás de cero?",
+    "card.forecastHelp":"Parte de la liquidez neta, suma el salario el día de pago y descuenta cada recibo fechado en su día de cargo. Lo que importa es el punto mínimo.",
+    "card.trend":"Gasto por categoría — mensual",
+    "card.trendHelp":"Un gráfico sustituye a los cuatro anteriores. Activa el suavizado; el eje y se mantiene fijo para que la forma sea comparable.",
+    "card.wealth":"Dónde está el patrimonio","card.wealthHelp":"Por qué la autonomía es ajustada pese a un patrimonio neto alto.",
+    "card.budget":"A dónde va el dinero este mes — vs presupuesto",
+    "card.budgetHelp":"Barra = gastado vs asignación proporcional a los días. Haz clic en una categoría para ver las transacciones.",
+    "card.cashbal":"Saldo de caja a fin de mes","card.cashbalHelp":"De la hoja Historical.",
+    "card.savrate":"Tasa de ahorro (% del salario) — mensual",
+    "card.netsav":"Ahorro e inversión netos — por mes","card.netsavHelp":"Aportaciones, no saldos.",
+    "card.subcat":"Este mes vs media de los últimos 12 meses",
+    "card.subcatHelp":"Barra = este mes · ◆ rombo = tu media de 12 meses (la referencia) · flecha = tendencia frente a esa media. Excluye la hipoteca.",
+    "card.billsDue":"Recibos a pagar este mes","card.owed":"Dónde está la deuda",
+    "card.owedHelp":"La hipoteca en el eje superior, todo lo demás en el inferior.",
+    "card.wish":"Lista de deseos — asequibilidad",
+    "btn.monthly":"Mensual","btn.ma3":"Media 3 meses",
+    "leg.avg12":"media 12 meses","leg.above":"por encima de la media / al alza","leg.below":"por debajo de la media / a la baja",
+    "leg.liquid":"líquido","leg.inclPension":"incl. pensión",
+    "det.bsSummary":"Balance detallado, recibos a pagar, dónde está la deuda y asequibilidad — haz clic para desplegar",
+    "det.relSummary":"Historial de versiones — haz clic para desplegar",
+    "bs.title":"Balance","bs.titleLive":"Balance — en vivo","bs.assets":"ACTIVO",
+    "bs.cashBank":"Efectivo y bancos","bs.savings":"Ahorros","bs.refunds":"Reembolsos pendientes",
+    "bs.currentAssets":"Activo corriente","bs.investLT":"Inversiones y largo plazo","bs.investments":"Inversiones",
+    "bs.totalAssets":"Total activo","bs.liabilities":"PASIVO","bs.stLiab":"Pasivo a corto plazo",
+    "bs.ltLiab":"Pasivo a largo plazo","bs.totalLiab":"Total pasivo","bs.netWorth":"PATRIMONIO NETO",
+    "bs.st":"CP","bs.lt":"LP",
+    "tbl.bill":"Recibo","tbl.amount":"Importe","tbl.day":"Día","tbl.when":"Cuándo",
+    "tbl.version":"Versión","tbl.date":"Fecha","tbl.changes":"Cambios",
+    "bills.paid":"Pagado ✓","bills.left":"Pendiente de pago este mes","bills.paidAmt":"{x} pagado",
+    "bills.totalMonthly":"Total mensual","bills.leftHdr":"{x} pendiente",
+    "wish.empty":"Añade una hoja <b>Wish List</b> a tu archivo para ver aquí la asequibilidad.",
+    "wish.head":"Liquidez neta {a} − provisiones {b} = <b style=\"color:#4ade80\">caja libre {c}</b> · umbral {g}% → máximo por compra {m}",
+    "wish.item":"Artículo","wish.category":"Categoría","wish.cost":"Coste","wish.verdict":"Veredicto",
+    "rel.note":"Añade una fila aquí cada vez que cambie el panel, para que el historial viaje con el archivo.",
+    "foot.text":"Todas las cifras se leen de tu propio archivo y permanecen en tu navegador — nada se sube ni se incrusta.",
+    "pv.hide":"🙈 Ocultar cifras","pv.show":"👁 Mostrar cifras","pv.title":"Alternar modo privacidad (H)",
+    "goal.prefix":"Objetivo {x}","goal.dash":"Objetivo —","goal.pct":"{p}% del objetivo",
+    "safe.used":"{used} de {budget} usados","safe.days":"~{n} días restantes",
+    "d.vs3mo":"vs 3 meses","d.mom":"vs mes ant.","t.illiquid":"{p}% ilíquido",
+    "u.mo":"meses","u.pt":"pt","u.d":"d",
+    "wealth.company":"Participación empresarial","wealth.pension":"Pensión","wealth.home":"Vivienda",
+    "wealth.other":"Otras inversiones","wealth.liquid":"Líquido",
+    "fc.low":"mínimo {x}",
+    "ins.cat":"<b>{cat} {cur}</b> este mes — {dir} {pct}% frente a tu media de 12 meses ({avg}).",
+    "ins.up":"un","ins.down":"un",
+    "ins.conc":"El patrimonio está concentrado: <b>{nw}</b> de patrimonio neto, pero solo <b>{nl}</b> líquidos",
+    "ins.concTail":" — {name} supone el {p}% del activo.",
+    "ins.streak":"<b>{n} meses seguidos ahorrando</b> — has movido dinero a ahorro todos los meses. Sigue así.",
+    "v.ontrack":"Según lo previsto","v.watch":"Vigila tu liquidez esta semana",
+    "v.watchSub":"Unos {n} meses de autonomía líquida","v.watchSafe":"{x} disponibles para gastar este mes",
+    "v.pace":"Gasto por encima del ritmo","v.paceSub":"Has usado el {p}% de tu asignación proporcional a los días de este mes.",
+    "v.okLeft":"{x} por gastar este mes","v.okSaving":"ahorrando un {p}%","v.okPace":"{p}% del ritmo usado",
+    "chart.otherLiab":"Otros pasivos (eje inferior)","chart.upperAxis":"{name} (eje superior)",
+    "tip.subcat":"{cat} · este mes {cur} · media 12 meses {ttm}",
+    "drill.title":"{cat} — {month} · {n} transacciones · {total}",
+    "err.noValues":"Este archivo aún no tiene valores guardados — ábrelo en Excel, pulsa Guardar una vez y vuelve a cargarlo.",
+    "err.read":"No se pudo leer el archivo: ","misc.uncat":"(sin categorizar)",
+    "help.netliq":"Efectivo disponible tras las deudas a corto plazo, y avance hacia tu objetivo de recuperación. Al ritmo mensual mostrado alcanzas el objetivo en el número de meses indicado.",
+    "help.forecast":"Proyecta tu saldo día a día durante 12 meses: parte de la liquidez neta, suma el salario neto el día de pago y resta cada domiciliación fechada en su día de cargo. Lo que importa es el punto mínimo.",
+    "help.trend":"Gasto recurrente mensual por categoría en los últimos 24 meses hasta el mes seleccionado — una línea por categoría. Alterna entre dato bruto y media de 3 meses; el eje y y la línea del cero se mantienen fijos. Excluye gastos puntuales, traspasos y ahorro.",
+    "help.wealth":"Tu patrimonio neto desglosado por dónde está colocado — muestra por qué la autonomía líquida puede ser ajustada aunque el patrimonio neto sea alto.",
+    "help.budget":"El gasto real de este mes por categoría frente al presupuesto. El % es el gasto respecto a la asignación proporcional a los días transcurridos. Haz clic en una fila para ver las transacciones.",
+    "help.cashbal":"Tu posición de caja a fin de mes a lo largo del tiempo, desde la hoja Historical.",
+    "help.savrate":"Ahorro e inversión netos de cada mes como porcentaje de tu salario.",
+    "help.netsav":"Dinero trasladado a ahorro e inversión cada mes (aportaciones, no saldos).",
+    "help.subcat":"Las barras son el gasto de este mes por subcategoría. El rombo marca la media mensual de los últimos 12 meses; la flecha indica si esa media subió (rojo) o bajó (verde) en el último cierre de mes. Escala compartida, hipoteca excluida.",
+    "help.percat":"El gasto recurrente mensual de cada categoría (barras) con su media móvil de 3 meses (línea).",
+    "help.balancesheet":"Una foto completa de activo menos pasivo que suma tu patrimonio neto, a partir de la hoja Accounts.",
+    "help.billsdue":"Tus domiciliaciones con sus días de cargo — lo que aún debe salir de la cuenta este mes.",
+    "help.owed":"Tus pasivos ordenados por tamaño (la hipoteca en el eje superior, todo lo demás en el inferior).",
+    "help.afford":"Cosas que estás considerando, filtradas por una regla de asequibilidad basada en la caja libre tras las provisiones."
+  },
+  fr:{
+    "app.title":"Finances personnelles — Tableau de bord","app.h1":"Finances personnelles",
+    "hdr.noWb":"aucun fichier chargé","hdr.month":"Mois","hdr.prev":"Mois précédent","hdr.next":"Mois suivant",
+    "hdr.load":"Charger le fichier","hdr.reload":"Recharger le fichier","hdr.lang":"Langue","hdr.loadedAt":"chargé {x}",
+    "view.overview":"Synthèse","view.analyst":"Analyse",
+    "empty.banner":"Aucun fichier chargé — rien n'est renseigné ci-dessous. Cliquez sur <b style=\"color:#cfcfe0\">{load}</b> et choisissez votre Finance Tracker <code>.xlsx</code>.",
+    "verdict.loadTitle":"Chargez votre fichier","verdict.loadSub":"Cliquez sur « {load} » pour renseigner chaque chiffre ci-dessous depuis votre tableur.",
+    "tile.safe":"Disponible à dépenser · ce mois-ci","tile.nw":"Patrimoine net","tile.nl":"Liquidités nettes",
+    "tile.nlSub":"liquidités + épargne − dettes à court terme","tile.sr":"Taux d'épargne","tile.srSub":"% du salaire épargné",
+    "tile.rw":"Autonomie de trésorerie","tile.rwSub":"liquidités ÷ dépenses mensuelles",
+    "sec.whatChanged":"Ce qui a changé · détecté automatiquement","sec.savHist":"Historique d'épargne et de liquidités",
+    "sec.expSub":"Dépenses par sous-catégorie","sec.perCat":"Par catégorie — réel mensuel (barres) + moyenne 3 mois (ligne)",
+    "sec.bsCommit":"Bilan et engagements","sec.relNotes":"Notes de version",
+    "card.netliq":"Liquidités nettes — reconstitution vers l'objectif",
+    "card.forecast":"Prévision de trésorerie sur 12 mois — passerez-vous sous zéro ?",
+    "card.forecastHelp":"Part des liquidités nettes, ajoute le salaire le jour de paie et retire chaque facture datée à son échéance. C'est le point bas qui compte.",
+    "card.trend":"Dépenses par catégorie — mensuel",
+    "card.trendHelp":"Un seul graphique remplace les quatre précédents. Activez le lissage ; l'axe y reste fixe pour que la forme soit comparable.",
+    "card.wealth":"Où se trouve le patrimoine","card.wealthHelp":"Pourquoi l'autonomie est courte malgré un patrimoine net élevé.",
+    "card.budget":"Où va l'argent ce mois-ci — vs budget",
+    "card.budgetHelp":"Barre = dépensé vs enveloppe proportionnelle aux jours écoulés. Cliquez sur une catégorie pour voir les transactions.",
+    "card.cashbal":"Solde de trésorerie en fin de mois","card.cashbalHelp":"D'après la feuille Historical.",
+    "card.savrate":"Taux d'épargne (% du salaire) — mensuel",
+    "card.netsav":"Épargne et investissements nets — par mois","card.netsavHelp":"Versements, pas soldes.",
+    "card.subcat":"Ce mois-ci vs moyenne sur 12 mois glissants",
+    "card.subcatHelp":"Barre = ce mois-ci · ◆ losange = votre moyenne sur 12 mois (la référence) · flèche = tendance par rapport à cette moyenne. Hors prêt immobilier.",
+    "card.billsDue":"Factures à payer ce mois-ci","card.owed":"Où se situe la dette",
+    "card.owedHelp":"Le prêt immobilier sur l'axe supérieur, tout le reste sur l'axe inférieur.",
+    "card.wish":"Liste d'envies — soutenabilité",
+    "btn.monthly":"Mensuel","btn.ma3":"Moyenne 3 mois",
+    "leg.avg12":"moyenne 12 mois","leg.above":"au-dessus de la moyenne / en hausse","leg.below":"en dessous de la moyenne / en baisse",
+    "leg.liquid":"liquide","leg.inclPension":"retraite incl.",
+    "det.bsSummary":"Bilan détaillé, factures à payer, où se situe la dette et soutenabilité — cliquez pour déplier",
+    "det.relSummary":"Historique des versions — cliquez pour déplier",
+    "bs.title":"Bilan","bs.titleLive":"Bilan — en direct","bs.assets":"ACTIF",
+    "bs.cashBank":"Liquidités et banques","bs.savings":"Épargne","bs.refunds":"Remboursements attendus",
+    "bs.currentAssets":"Actif circulant","bs.investLT":"Investissements et long terme","bs.investments":"Investissements",
+    "bs.totalAssets":"Total actif","bs.liabilities":"PASSIF","bs.stLiab":"Passif à court terme",
+    "bs.ltLiab":"Passif à long terme","bs.totalLiab":"Total passif","bs.netWorth":"PATRIMOINE NET",
+    "bs.st":"CT","bs.lt":"LT",
+    "tbl.bill":"Facture","tbl.amount":"Montant","tbl.day":"Jour","tbl.when":"Quand",
+    "tbl.version":"Version","tbl.date":"Date","tbl.changes":"Modifications",
+    "bills.paid":"Payée ✓","bills.left":"Reste à payer ce mois-ci","bills.paidAmt":"{x} payés",
+    "bills.totalMonthly":"Total mensuel","bills.leftHdr":"{x} restants",
+    "wish.empty":"Ajoutez une feuille <b>Wish List</b> à votre fichier pour voir la soutenabilité ici.",
+    "wish.head":"Liquidités nettes {a} − provisions {b} = <b style=\"color:#4ade80\">trésorerie libre {c}</b> · seuil {g}% → maximum par achat {m}",
+    "wish.item":"Article","wish.category":"Catégorie","wish.cost":"Coût","wish.verdict":"Verdict",
+    "rel.note":"Ajoutez une ligne ici à chaque modification du tableau de bord, pour que l'historique voyage avec le fichier.",
+    "foot.text":"Tous les chiffres sont lus depuis votre propre fichier et restent dans votre navigateur — rien n'est téléversé ni intégré.",
+    "pv.hide":"🙈 Masquer les chiffres","pv.show":"👁 Afficher les chiffres","pv.title":"Basculer le mode confidentialité (H)",
+    "goal.prefix":"Objectif {x}","goal.dash":"Objectif —","goal.pct":"{p}% de l'objectif",
+    "safe.used":"{used} sur {budget} utilisés","safe.days":"~{n} jours restants",
+    "d.vs3mo":"vs 3 mois","d.mom":"vs mois préc.","t.illiquid":"{p}% illiquide",
+    "u.mo":"mois","u.pt":"pt","u.d":"j",
+    "wealth.company":"Participation dans l'entreprise","wealth.pension":"Retraite","wealth.home":"Résidence",
+    "wealth.other":"Autres investissements","wealth.liquid":"Liquidités",
+    "fc.low":"creux {x}",
+    "ins.cat":"<b>{cat} {cur}</b> ce mois-ci — {dir} {pct}% par rapport à votre moyenne sur 12 mois ({avg}).",
+    "ins.up":"en hausse de","ins.down":"en baisse de",
+    "ins.conc":"Le patrimoine est concentré : <b>{nw}</b> de patrimoine net, mais seulement <b>{nl}</b> de liquidités",
+    "ins.concTail":" — {name} représente {p}% de l'actif.",
+    "ins.streak":"<b>{n} mois d'épargne d'affilée</b> — vous avez mis de l'argent de côté chaque mois. Continuez.",
+    "v.ontrack":"Dans les clous","v.watch":"Surveillez votre trésorerie cette semaine",
+    "v.watchSub":"Environ {n} mois d'autonomie en liquidités","v.watchSafe":"{x} disponibles à dépenser ce mois-ci",
+    "v.pace":"Dépenses en avance sur le rythme","v.paceSub":"Vous avez utilisé {p}% de votre enveloppe proportionnelle aux jours écoulés ce mois-ci.",
+    "v.okLeft":"{x} encore à dépenser ce mois-ci","v.okSaving":"épargne de {p}%","v.okPace":"{p}% du rythme utilisé",
+    "chart.otherLiab":"Autres passifs (axe inférieur)","chart.upperAxis":"{name} (axe supérieur)",
+    "tip.subcat":"{cat} · ce mois-ci {cur} · moyenne 12 mois {ttm}",
+    "drill.title":"{cat} — {month} · {n} transactions · {total}",
+    "err.noValues":"Ce fichier ne contient pas encore de valeurs enregistrées — ouvrez-le dans Excel, appuyez une fois sur Enregistrer, puis rechargez-le.",
+    "err.read":"Impossible de lire ce fichier : ","misc.uncat":"(non catégorisé)",
+    "help.netliq":"Trésorerie disponible après les dettes à court terme, et progression vers votre objectif de reconstitution. Au rythme mensuel affiché, vous atteignez l'objectif dans le nombre de mois indiqué.",
+    "help.forecast":"Projette votre solde jour par jour sur 12 mois : part des liquidités nettes, ajoute le salaire net le jour de paie et soustrait chaque prélèvement daté à son échéance. C'est le point bas qui compte.",
+    "help.trend":"Dépenses récurrentes mensuelles par catégorie sur les 24 derniers mois jusqu'au mois sélectionné — une ligne par catégorie. Basculez entre brut et moyenne 3 mois ; l'axe y et la ligne du zéro restent fixes. Hors dépenses exceptionnelles, virements et épargne.",
+    "help.wealth":"Votre patrimoine net réparti selon l'endroit où il est placé — montre pourquoi l'autonomie en liquidités peut être courte même avec un patrimoine net élevé.",
+    "help.budget":"Les dépenses réelles du mois par catégorie face au budget. Le % rapporte la dépense à l'enveloppe proportionnelle aux jours écoulés. Cliquez sur une ligne pour voir les transactions.",
+    "help.cashbal":"Votre position de trésorerie en fin de mois dans le temps, d'après la feuille Historical.",
+    "help.savrate":"Épargne et investissements nets de chaque mois en pourcentage de votre salaire.",
+    "help.netsav":"Argent placé en épargne et investissements chaque mois (versements, pas soldes).",
+    "help.subcat":"Les barres correspondent aux dépenses du mois par sous-catégorie. Le losange marque la moyenne mensuelle sur 12 mois glissants ; la flèche indique si cette moyenne a monté (rouge) ou baissé (vert) à la dernière clôture. Échelle commune, prêt immobilier exclu.",
+    "help.percat":"Les dépenses récurrentes mensuelles de chaque catégorie (barres) avec leur moyenne mobile sur 3 mois (ligne).",
+    "help.balancesheet":"Un instantané complet de l'actif moins le passif qui somme à votre patrimoine net, alimenté par la feuille Accounts.",
+    "help.billsdue":"Vos prélèvements automatiques avec leur jour de débit — ce qui doit encore quitter le compte ce mois-ci.",
+    "help.owed":"Vos passifs classés par taille (le prêt immobilier sur l'axe supérieur, tout le reste sur l'axe inférieur).",
+    "help.afford":"Les achats que vous envisagez, filtrés par une règle de soutenabilité fondée sur la trésorerie libre après provisions."
+  },
+  de:{
+    "app.title":"Persönliche Finanzen — Dashboard","app.h1":"Persönliche Finanzen",
+    "hdr.noWb":"keine Datei geladen","hdr.month":"Monat","hdr.prev":"Vorheriger Monat","hdr.next":"Nächster Monat",
+    "hdr.load":"Datei laden","hdr.reload":"Datei neu laden","hdr.lang":"Sprache","hdr.loadedAt":"geladen {x}",
+    "view.overview":"Überblick","view.analyst":"Analyse",
+    "empty.banner":"Keine Datei geladen — nichts unten ist befüllt. Klicke auf <b style=\"color:#cfcfe0\">{load}</b> und wähle deinen gespeicherten Finance Tracker <code>.xlsx</code>.",
+    "verdict.loadTitle":"Lade deine Datei","verdict.loadSub":"Klicke auf „{load}“, um jede Zahl unten aus deiner Tabelle zu befüllen.",
+    "tile.safe":"Verfügbar diesen Monat","tile.nw":"Nettovermögen","tile.nl":"Netto-Liquidität",
+    "tile.nlSub":"Bargeld + Ersparnisse − kurzfristige Schulden","tile.sr":"Sparquote","tile.srSub":"% des Gehalts gespart",
+    "tile.rw":"Liquiditätsreichweite","tile.rwSub":"liquide Mittel ÷ monatliche Ausgaben",
+    "sec.whatChanged":"Was sich geändert hat · automatisch erkannt","sec.savHist":"Verlauf von Sparen und Liquidität",
+    "sec.expSub":"Ausgaben nach Unterkategorie","sec.perCat":"Pro Kategorie — Monatswert (Balken) + 3-Monats-Durchschnitt (Linie)",
+    "sec.bsCommit":"Bilanz und Verpflichtungen","sec.relNotes":"Versionshinweise",
+    "card.netliq":"Netto-Liquidität — Aufbau zum Ziel",
+    "card.forecast":"12-Monats-Liquiditätsprognose — rutschst du unter null?",
+    "card.forecastHelp":"Startet bei der Netto-Liquidität, addiert das Gehalt am Zahltag und bucht jede datierte Rechnung an ihrem Fälligkeitstag ab. Entscheidend ist der Tiefpunkt.",
+    "card.trend":"Ausgaben nach Kategorie — monatlich",
+    "card.trendHelp":"Ein Diagramm ersetzt die früheren vier. Glättung umschalten; die y-Achse bleibt fest, damit der Verlauf vergleichbar bleibt.",
+    "card.wealth":"Wo das Vermögen steckt","card.wealthHelp":"Warum die Reichweite knapp ist trotz hohem Nettovermögen.",
+    "card.budget":"Wohin das Geld diesen Monat fließt — vs Budget",
+    "card.budgetHelp":"Balken = ausgegeben vs tagesanteiliges Budget. Klicke eine Kategorie an, um die Buchungen zu sehen.",
+    "card.cashbal":"Kassenbestand zum Monatsende","card.cashbalHelp":"Aus dem Blatt Historical.",
+    "card.savrate":"Sparquote (% des Gehalts) — monatlich",
+    "card.netsav":"Netto-Sparen und -Investitionen — pro Monat","card.netsavHelp":"Einzahlungen, keine Bestände.",
+    "card.subcat":"Dieser Monat vs Durchschnitt der letzten 12 Monate",
+    "card.subcatHelp":"Balken = dieser Monat · ◆ Raute = dein 12-Monats-Durchschnitt (der Referenzpunkt) · Pfeil = Trend gegenüber diesem Durchschnitt. Ohne Hypothek.",
+    "card.billsDue":"Diesen Monat fällige Rechnungen","card.owed":"Wo die Schulden liegen",
+    "card.owedHelp":"Hypothek auf der oberen Achse, alles andere auf der unteren.",
+    "card.wish":"Wunschliste — Leistbarkeit",
+    "btn.monthly":"Monatlich","btn.ma3":"3-Monats-Schnitt",
+    "leg.avg12":"12-Monats-Schnitt","leg.above":"über Durchschnitt / steigend","leg.below":"unter Durchschnitt / fallend",
+    "leg.liquid":"liquide","leg.inclPension":"inkl. Rente",
+    "det.bsSummary":"Detaillierte Bilanz, fällige Rechnungen, wo die Schulden liegen und Leistbarkeit — zum Aufklappen klicken",
+    "det.relSummary":"Versionsverlauf — zum Aufklappen klicken",
+    "bs.title":"Bilanz","bs.titleLive":"Bilanz — live","bs.assets":"AKTIVA",
+    "bs.cashBank":"Bargeld und Konten","bs.savings":"Ersparnisse","bs.refunds":"Offene Erstattungen",
+    "bs.currentAssets":"Umlaufvermögen","bs.investLT":"Investitionen und Langfristiges","bs.investments":"Investitionen",
+    "bs.totalAssets":"Summe Aktiva","bs.liabilities":"PASSIVA","bs.stLiab":"Kurzfristige Verbindlichkeiten",
+    "bs.ltLiab":"Langfristige Verbindlichkeiten","bs.totalLiab":"Summe Verbindlichkeiten","bs.netWorth":"NETTOVERMÖGEN",
+    "bs.st":"KF","bs.lt":"LF",
+    "tbl.bill":"Rechnung","tbl.amount":"Betrag","tbl.day":"Tag","tbl.when":"Wann",
+    "tbl.version":"Version","tbl.date":"Datum","tbl.changes":"Änderungen",
+    "bills.paid":"Bezahlt ✓","bills.left":"Diesen Monat noch zu zahlen","bills.paidAmt":"{x} bezahlt",
+    "bills.totalMonthly":"Monatssumme","bills.leftHdr":"{x} offen",
+    "wish.empty":"Füge deiner Datei ein Blatt <b>Wish List</b> hinzu, um hier die Leistbarkeit zu sehen.",
+    "wish.head":"Netto-Liquidität {a} − Rückstellungen {b} = <b style=\"color:#4ade80\">freie Mittel {c}</b> · Schwelle {g}% → Maximum pro Kauf {m}",
+    "wish.item":"Position","wish.category":"Kategorie","wish.cost":"Kosten","wish.verdict":"Urteil",
+    "rel.note":"Füge hier bei jeder Änderung des Dashboards eine Zeile hinzu, damit die Historie mit der Datei reist.",
+    "foot.text":"Alle Zahlen werden aus deiner eigenen Datei gelesen und bleiben in deinem Browser — nichts wird hochgeladen oder eingebettet.",
+    "pv.hide":"🙈 Zahlen verbergen","pv.show":"👁 Zahlen zeigen","pv.title":"Privatsphäre-Modus umschalten (H)",
+    "goal.prefix":"Ziel {x}","goal.dash":"Ziel —","goal.pct":"{p}% des Ziels",
+    "safe.used":"{used} von {budget} genutzt","safe.days":"~{n} Tage übrig",
+    "d.vs3mo":"vs 3 Mon.","d.mom":"vs Vormonat","t.illiquid":"{p}% illiquide",
+    "u.mo":"Mon.","u.pt":"Pkt","u.d":"T",
+    "wealth.company":"Unternehmensanteil","wealth.pension":"Rente","wealth.home":"Wohneigentum",
+    "wealth.other":"Andere Investitionen","wealth.liquid":"Liquide Mittel",
+    "fc.low":"Tief {x}",
+    "ins.cat":"<b>{cat} {cur}</b> diesen Monat — {dir} {pct}% gegenüber deinem 12-Monats-Durchschnitt ({avg}).",
+    "ins.up":"plus","ins.down":"minus",
+    "ins.conc":"Das Vermögen ist konzentriert: <b>{nw}</b> Nettovermögen, aber nur <b>{nl}</b> liquide",
+    "ins.concTail":" — {name} macht {p}% der Aktiva aus.",
+    "ins.streak":"<b>{n} Monate Sparserie</b> — du hast jeden Monat Geld zurückgelegt. Weiter so.",
+    "v.ontrack":"Im Plan","v.watch":"Achte diese Woche auf deine Liquidität",
+    "v.watchSub":"Etwa {n} Monate liquide Reichweite","v.watchSafe":"{x} diesen Monat verfügbar",
+    "v.pace":"Ausgaben über dem Plan","v.paceSub":"Du hast {p}% deines tagesanteiligen Budgets diesen Monat genutzt.",
+    "v.okLeft":"{x} diesen Monat noch verfügbar","v.okSaving":"{p}% gespart","v.okPace":"{p}% des Plans genutzt",
+    "chart.otherLiab":"Andere Verbindlichkeiten (untere Achse)","chart.upperAxis":"{name} (obere Achse)",
+    "tip.subcat":"{cat} · dieser Monat {cur} · 12-Monats-Schnitt {ttm}",
+    "drill.title":"{cat} — {month} · {n} Buchungen · {total}",
+    "err.noValues":"Diese Datei enthält noch keine gespeicherten Werte — öffne sie in Excel, drücke einmal Speichern und lade sie erneut.",
+    "err.read":"Datei konnte nicht gelesen werden: ","misc.uncat":"(nicht kategorisiert)",
+    "help.netliq":"Verfügbares Geld nach kurzfristigen Schulden und der Fortschritt zu deinem Aufbauziel. Beim gezeigten Monatstempo erreichst du das Ziel in der angegebenen Zahl von Monaten.",
+    "help.forecast":"Projiziert deinen Kontostand Tag für Tag über 12 Monate: startet bei der Netto-Liquidität, addiert das Nettogehalt am Zahltag und zieht jede datierte Lastschrift an ihrem Fälligkeitstag ab. Entscheidend ist der Tiefpunkt.",
+    "help.trend":"Monatlich wiederkehrende Ausgaben je Kategorie über die letzten 24 Monate bis zum gewählten Monat — eine Linie je Kategorie. Zwischen Rohwert und 3-Monats-Schnitt umschalten; y-Achse und Nulllinie bleiben fest. Ohne Einmal-/Kapitalausgaben, Umbuchungen und Sparen.",
+    "help.wealth":"Dein Nettovermögen aufgeteilt danach, wo es steckt — zeigt, warum die liquide Reichweite knapp sein kann, obwohl das Nettovermögen hoch ist.",
+    "help.budget":"Die tatsächlichen Ausgaben dieses Monats je Kategorie gegenüber dem Budget. Der Prozentwert setzt die Ausgabe ins Verhältnis zum tagesanteiligen Budget. Klicke eine Zeile für die Buchungen an.",
+    "help.cashbal":"Dein Kassenbestand zum Monatsende im Zeitverlauf, aus dem Blatt Historical.",
+    "help.savrate":"Netto-Sparen und -Investitionen jedes Monats als Prozentsatz deines Gehalts.",
+    "help.netsav":"Geld, das jeden Monat in Sparen und Investitionen fließt (Einzahlungen, keine Bestände).",
+    "help.subcat":"Balken sind die Ausgaben dieses Monats je Unterkategorie. Die Raute markiert den monatlichen Durchschnitt der letzten 12 Monate; der Pfeil zeigt, ob dieser Durchschnitt zum letzten Monatsabschluss gestiegen (rot) oder gefallen (grün) ist. Gemeinsame Skala, Hypothek ausgenommen.",
+    "help.percat":"Die monatlich wiederkehrenden Ausgaben jeder Kategorie (Balken) mit ihrem gleitenden 3-Monats-Durchschnitt (Linie).",
+    "help.balancesheet":"Eine vollständige Momentaufnahme von Aktiva minus Passiva, die dein Nettovermögen ergibt, gespeist aus dem Blatt Accounts.",
+    "help.billsdue":"Deine Lastschriften mit ihren Abbuchungstagen — was diesen Monat noch vom Konto geht.",
+    "help.owed":"Deine Verbindlichkeiten nach Größe sortiert (Hypothek auf der oberen Achse, alles andere auf der unteren).",
+    "help.afford":"Anschaffungen, die du erwägst, gefiltert über eine Leistbarkeitsregel auf Basis der freien Mittel nach Rückstellungen."
+  }};
+
+  var KEY='fin_lang';
+  var cur='en', explicit=false;
+  function has(l){ return !!DICT[l]; }
+  function detect(){
+    var saved=null; try{ saved=localStorage.getItem(KEY); }catch(e){}
+    if(saved&&has(saved)){ explicit=true; return saved; }
+    var navs=[]; try{ navs=(navigator.languages&&navigator.languages.length)?navigator.languages:[navigator.language]; }catch(e){}
+    for(var i=0;i<navs.length;i++){ var p=String(navs[i]||'').toLowerCase().split('-')[0]; if(has(p)) return p; }
+    return 'en';
+  }
+  cur=detect();
+  /* {name} placeholders; values are inserted verbatim (callers pre-escape where needed). */
+  function t(k,vars){
+    var s=(DICT[cur]&&DICT[cur][k]);
+    if(s==null) s=(DICT.en[k]!=null?DICT.en[k]:k);
+    if(vars) s=s.replace(/\{(\w+)\}/g,function(m,n){ return (vars[n]!=null)?vars[n]:m; });
+    return s;
+  }
+  return {
+    langs:LANGS, dict:DICT,
+    get:function(){return cur;},
+    isExplicit:function(){return explicit;},
+    defaultLocale:function(){return DEFLOC[cur]||undefined;},
+    has:has,
+    /* set(lang, remember) — remember=true records the user's own choice so it wins
+       over Config and the browser on every later load. */
+    set:function(l,remember){
+      if(!has(l)||l===cur&&!remember) { if(!has(l))return false; }
+      cur=l;
+      if(remember){ explicit=true; try{ localStorage.setItem(KEY,l); }catch(e){} }
+      try{ document.documentElement.setAttribute('lang',l); }catch(e){}
+      return true;
+    },
+    t:t
+  };
+})();
+</script>
 <header style="position:sticky;top:0;z-index:50;background:#0f0f13;border-bottom:1px solid #2a2a3a">
   <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap">
-    <div><h1>Personal Finances</h1><div class="sub"><span id="ownerName"></span><span id="dataAsOf">no workbook loaded</span></div></div>
-    <div class="hseg"><button type="button" id="ovBtn" class="on" aria-pressed="true" onclick="setView('ov')">Overview</button><button type="button" id="anBtn" aria-pressed="false" onclick="setView('an')">Analyst</button></div>
+    <div><h1 data-i18n="app.h1">Personal Finances</h1><div class="sub"><span id="ownerName"></span><span id="dataAsOf" data-i18n="hdr.noWb">no workbook loaded</span></div></div>
+    <div class="hseg"><button type="button" id="ovBtn" class="on" aria-pressed="true" onclick="setView('ov')" data-i18n="view.overview">Overview</button><button type="button" id="anBtn" aria-pressed="false" onclick="setView('an')" data-i18n="view.analyst">Analyst</button></div>
   </div>
   <div class="hpill" id="hdrRight">
-    <div class="msel" id="monthCtl" style="display:none"><span style="font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.6px;margin-right:2px">Month</span><button id="mPrev" title="Previous month">&lsaquo;</button><select id="monthSel"></select><button id="mNext" title="Next month">&rsaquo;</button></div>
-    <button class="pill" id="loadWb" type="button">Load workbook</button><input type="file" id="wbFile" accept=".xlsx" style="display:none">
+    <div class="msel" id="monthCtl" style="display:none"><span style="font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.6px;margin-right:2px" data-i18n="hdr.month">Month</span><button id="mPrev" data-i18n-title="hdr.prev" title="Previous month">&lsaquo;</button><select id="monthSel"></select><button id="mNext" data-i18n-title="hdr.next" title="Next month">&rsaquo;</button></div>
+    <div class="msel" id="langCtl"><span style="font-size:12px;color:#9a9aa8;text-transform:uppercase;letter-spacing:.6px;margin-right:2px" data-i18n="hdr.lang">Language</span><select id="langSel" aria-label="Language"></select></div><button class="pill" id="loadWb" type="button" data-i18n="hdr.load">Load workbook</button><input type="file" id="wbFile" accept=".xlsx" style="display:none">
   </div>
 </header>
 
 <div class="wrap">
-  <div id="emptyBanner">No workbook loaded &mdash; nothing below is populated. Click <b style="color:#cfcfe0">Load workbook</b> and choose your saved Finance Tracker <code>.xlsx</code>.</div>
+  <div id="emptyBanner" data-i18n-html="empty.banner">No workbook loaded &mdash; nothing below is populated. Click <b style="color:#cfcfe0">Load workbook</b> and choose your saved Finance Tracker <code>.xlsx</code>.</div>
 
   <div class="verdict amber">
     <div class="dot" id="ovDot"></div>
-    <div><div class="vtitle" id="ovVt">Load your workbook</div>
-      <div class="vsub" id="ovVs">Click &ldquo;Load workbook&rdquo; to populate every figure below from your spreadsheet.</div></div>
+    <div><div class="vtitle" id="ovVt" data-i18n="verdict.loadTitle">Load your workbook</div>
+      <div class="vsub" id="ovVs" data-i18n-html="verdict.loadSub">Click &ldquo;Load workbook&rdquo; to populate every figure below from your spreadsheet.</div></div>
   </div>
 
   <div class="heroes">
-    <div class="card hero-main"><div class="klabel">Safe to spend &middot; this month</div><div class="big" id="ovSafe">&mdash;</div><div class="ksub" id="ovSafeSub"></div><div class="bar"><i id="ovSafeBar" style="width:0%"></i></div></div>
-    <div class="card"><div class="klabel">Net worth</div><div class="mid" id="ovNW">&mdash;</div><span id="ovNWd"></span><div class="ksub" id="ovNWs"></div></div>
-    <div class="card"><div class="klabel">Net liquid</div><div class="mid" id="ovNL">&mdash;</div><span id="ovNLd"></span><div class="ksub">cash + savings &minus; short-term debt</div></div>
-    <div class="card"><div class="klabel">Savings rate</div><div class="mid" id="ovSR">&mdash;</div><span id="ovSRd"></span><div class="ksub">% of salary saved</div></div>
-    <div class="card"><div class="klabel">Cash runway</div><div class="mid" id="ovRW">&mdash;</div><div class="ksub">liquid &divide; monthly outgoings</div></div>
+    <div class="card hero-main"><div class="klabel" data-i18n="tile.safe">Safe to spend &middot; this month</div><div class="big" id="ovSafe">&mdash;</div><div class="ksub" id="ovSafeSub"></div><div class="bar"><i id="ovSafeBar" style="width:0%"></i></div></div>
+    <div class="card"><div class="klabel" data-i18n="tile.nw">Net worth</div><div class="mid" id="ovNW">&mdash;</div><span id="ovNWd"></span><div class="ksub" id="ovNWs"></div></div>
+    <div class="card"><div class="klabel" data-i18n="tile.nl">Net liquid</div><div class="mid" id="ovNL">&mdash;</div><span id="ovNLd"></span><div class="ksub" data-i18n="tile.nlSub">cash + savings &minus; short-term debt</div></div>
+    <div class="card"><div class="klabel" data-i18n="tile.sr">Savings rate</div><div class="mid" id="ovSR">&mdash;</div><span id="ovSRd"></span><div class="ksub" data-i18n="tile.srSub">% of salary saved</div></div>
+    <div class="card"><div class="klabel" data-i18n="tile.rw">Cash runway</div><div class="mid" id="ovRW">&mdash;</div><div class="ksub" data-i18n="tile.rwSub">liquid &divide; monthly outgoings</div></div>
   </div>
 
-  <div class="sec-h">What changed &middot; auto-detected</div>
+  <div class="sec-h" data-i18n="sec.whatChanged">What changed &middot; auto-detected</div>
   <div id="ovInsights"></div>
 
   <div id="overview">
     <div class="card">
-      <div class="ctitle">Net liquidity &mdash; rebuild to goal</div>
-      <div class="goalrow"><span class="a" id="ovGoalNow">&mdash;</span><span class="b" id="ovGoalTgt">Goal &mdash;</span></div>
+      <div class="ctitle" data-i18n="card.netliq" data-help="netliq">Net liquidity &mdash; rebuild to goal</div>
+      <div class="goalrow"><span class="a" id="ovGoalNow">&mdash;</span><span class="b" id="ovGoalTgt" data-i18n="goal.dash">Goal &mdash;</span></div>
       <div class="goaltrack"><i id="ovGoalBar" style="width:0%"></i></div>
       <div class="chelp" id="ovGoalNote" style="margin:0"></div>
     </div>
     <div class="card">
-      <div class="ctitle">12-month cash-flow forecast &mdash; will you dip below zero?</div>
-      <div class="chelp">Opens from net liquid, adds salary on payday, drops each dated bill on its due day. The low point is what matters.</div>
+      <div class="ctitle" data-i18n="card.forecast" data-help="forecast">12-month cash-flow forecast &mdash; will you dip below zero?</div>
+      <div class="chelp" data-i18n="card.forecastHelp">Opens from net liquid, adds salary on payday, drops each dated bill on its due day. The low point is what matters.</div>
       <div class="chartbox" style="height:230px"><canvas id="ovFc"></canvas></div>
     </div>
     <div class="row2">
       <div class="card">
-        <div class="ctitle">Spending by category &mdash; monthly</div>
-        <div class="chelp">One chart replaces the old four. Toggle smoothing; the y-axis stays fixed so the shape is comparable.</div>
+        <div class="ctitle" data-i18n="card.trend" data-help="trend">Spending by category &mdash; monthly</div>
+        <div class="chelp" data-i18n="card.trendHelp">One chart replaces the old four. Toggle smoothing; the y-axis stays fixed so the shape is comparable.</div>
         <div class="mini-toggles" style="display:flex;gap:8px;margin-bottom:10px">
-          <button type="button" id="tRaw" class="on" onclick="setSmooth(false)">Monthly</button><button type="button" id="tMA" onclick="setSmooth(true)">3-mo average</button>
+          <button type="button" id="tRaw" class="on" onclick="setSmooth(false)" data-i18n="btn.monthly">Monthly</button><button type="button" id="tMA" onclick="setSmooth(true)" data-i18n="btn.ma3">3-mo average</button>
         </div>
         <div class="chartbox"><canvas id="ovTrend"></canvas></div>
       </div>
       <div class="card">
-        <div class="ctitle">Where the wealth sits</div>
-        <div class="chelp">Why runway is tight despite a high net worth.</div>
+        <div class="ctitle" data-i18n="card.wealth" data-help="wealth">Where the wealth sits</div>
+        <div class="chelp" data-i18n="card.wealthHelp">Why runway is tight despite a high net worth.</div>
         <div class="donutwrap"><canvas id="ovDonut"></canvas></div>
       </div>
     </div>
     <div class="card">
-      <div class="ctitle">Where it's going this month &mdash; vs budget</div>
-      <div class="chelp">Bar = spent vs day-proportional allowance. Click a category to see the transactions.</div>
+      <div class="ctitle" data-i18n="card.budget" data-help="budget">Where it's going this month &mdash; vs budget</div>
+      <div class="chelp" data-i18n="card.budgetHelp">Bar = spent vs day-proportional allowance. Click a category to see the transactions.</div>
       <div id="ovBudget"></div>
       <div class="drill" id="ovDrill" style="display:none"><h4 id="ovDrillTitle"></h4><div id="ovDrillList"></div></div>
     </div>
@@ -220,55 +698,56 @@ details.detail[open]>summary::before{transform:rotate(90deg)}
 
   <div id="analyst" style="display:none">
 
-    <div class="sec-h">Savings &amp; liquidity history</div>
+    <div class="sec-h" data-i18n="sec.savHist">Savings &amp; liquidity history</div>
     <div class="row2b">
-      <div class="card"><div class="ctitle">Month-end cash balance</div><div class="chelp">From the Historical sheet.</div><div class="chartbox" style="height:220px"><canvas id="cashbal"></canvas></div></div>
-      <div class="card"><div class="ctitle">Savings rate (% of salary) &mdash; monthly</div><div class="chelp">&nbsp;</div><div class="chartbox" style="height:220px"><canvas id="savrate"></canvas></div></div>
+      <div class="card"><div class="ctitle" data-i18n="card.cashbal" data-help="cashbal">Month-end cash balance</div><div class="chelp" data-i18n="card.cashbalHelp">From the Historical sheet.</div><div class="chartbox" style="height:220px"><canvas id="cashbal"></canvas></div></div>
+      <div class="card"><div class="ctitle" data-i18n="card.savrate" data-help="savrate">Savings rate (% of salary) &mdash; monthly</div><div class="chelp">&nbsp;</div><div class="chartbox" style="height:220px"><canvas id="savrate"></canvas></div></div>
     </div>
-    <div class="card"><div class="ctitle">Net savings &amp; investments &mdash; per month</div><div class="chelp">Contributions, not balances.</div><div class="chartbox" style="height:220px"><canvas id="netsav"></canvas></div></div>
+    <div class="card"><div class="ctitle" data-i18n="card.netsav" data-help="netsav">Net savings &amp; investments &mdash; per month</div><div class="chelp" data-i18n="card.netsavHelp">Contributions, not balances.</div><div class="chartbox" style="height:220px"><canvas id="netsav"></canvas></div></div>
 
-    <div class="sec-h">Expenses by subcategory</div>
+    <div class="sec-h" data-i18n="sec.expSub">Expenses by subcategory</div>
     <div class="card">
-      <div class="ctitle">This month vs trailing-12-month average</div>
-      <div class="chelp">Bar = this month &middot; &#9670; diamond = your 12-month average (the reference point) &middot; arrow = trend vs that average. Excludes mortgage.</div>
+      <div class="ctitle" data-i18n="card.subcat" data-help="subcat">This month vs trailing-12-month average</div>
+      <div class="chelp" data-i18n="card.subcatHelp">Bar = this month &middot; &#9670; diamond = your 12-month average (the reference point) &middot; arrow = trend vs that average. Excludes mortgage.</div>
       <div class="subcatbox" id="subcatBox"><canvas id="subcat"></canvas></div>
-      <div class="subleg"><span><svg width="16" height="12"><polygon points="8,1 15,6 8,11 1,6" fill="#e6e6ef"/></svg> 12-mo average</span><span><svg width="16" height="12"><polygon points="4,2 14,6 4,10" fill="#f87171"/></svg> above average / rising</span><span><svg width="16" height="12"><polygon points="12,2 2,6 12,10" fill="#4ade80"/></svg> below average / falling</span></div>
+      <div class="subleg"><span><svg width="16" height="12"><polygon points="8,1 15,6 8,11 1,6" fill="#e6e6ef"/></svg> <span data-i18n="leg.avg12">12-mo average</span></span><span><svg width="16" height="12"><polygon points="4,2 14,6 4,10" fill="#f87171"/></svg> <span data-i18n="leg.above">above average / rising</span></span><span><svg width="16" height="12"><polygon points="12,2 2,6 12,10" fill="#4ade80"/></svg> <span data-i18n="leg.below">below average / falling</span></span></div>
     </div>
 
-    <div class="sec-h">Per category &mdash; monthly actual (bars) + 3-month average (line)</div>
+    <div class="sec-h" data-i18n="sec.perCat" data-help="percat">Per category &mdash; monthly actual (bars) + 3-month average (line)</div>
     <div class="smgrid" id="smgrid"></div>
 
-    <div class="sec-h">Balance sheet &amp; commitments</div>
+    <div class="sec-h" data-i18n="sec.bsCommit" data-help="balancesheet">Balance sheet &amp; commitments</div>
     <details class="detail">
-      <summary>Itemised balance sheet, bills due, where money is owed &amp; affordability &mdash; click to expand</summary>
+      <summary data-i18n="det.bsSummary" data-help="balancesheet">Itemised balance sheet, bills due, where money is owed &amp; affordability &mdash; click to expand</summary>
       <div class="detail-body">
         <div class="detail-grid">
-          <div><div class="bs-title">Balance Sheet</div><div id="bsWrap"></div></div>
+          <div><div class="bs-title" data-i18n="bs.title" data-help="balancesheet">Balance Sheet</div><div id="bsWrap"></div></div>
           <div>
-            <div class="ctitle" style="margin-bottom:8px">Bills due this month <span id="billsLeftHdr" style="color:#fbbf24;font-weight:600"></span></div>
-            <table class="dtable"><thead><tr><th>Bill</th><th class="num">Amount</th><th class="num">Day</th><th class="num">When</th></tr></thead><tbody id="billsDueBody"></tbody></table>
+            <div class="ctitle" style="margin-bottom:8px" data-help="billsdue"><span data-i18n="card.billsDue">Bills due this month</span> <span id="billsLeftHdr" style="color:#fbbf24;font-weight:600"></span></div>
+            <table class="dtable"><thead><tr><th data-i18n="tbl.bill">Bill</th><th class="num" data-i18n="tbl.amount">Amount</th><th class="num" data-i18n="tbl.day">Day</th><th class="num" data-i18n="tbl.when">When</th></tr></thead><tbody id="billsDueBody"></tbody></table>
           </div>
         </div>
-        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:6px">Where money is owed</div><div class="chelp">Mortgage on the upper axis, everything else on the lower.</div><div class="chartbox" style="height:240px"><canvas id="liabMix"></canvas></div></div>
-        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:8px">Wish list &mdash; affordability</div><div id="wlInner"><div style="color:#9a9aa8;font-size:12.5px">Add a <b>Wish List</b> sheet to your workbook to see affordability here.</div></div></div>
+        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:6px" data-i18n="card.owed" data-help="owed">Where money is owed</div><div class="chelp" data-i18n="card.owedHelp">Mortgage on the upper axis, everything else on the lower.</div><div class="chartbox" style="height:240px"><canvas id="liabMix"></canvas></div></div>
+        <div style="margin-top:18px"><div class="ctitle" style="margin-bottom:8px" data-i18n="card.wish" data-help="afford">Wish list &mdash; affordability</div><div id="wlInner"><div style="color:#9a9aa8;font-size:12.5px" data-i18n-html="wish.empty">Add a <b>Wish List</b> sheet to your workbook to see affordability here.</div></div></div>
       </div>
     </details>
   </div>
 
-  <div class="sec-h" style="margin-top:26px">Release notes</div>
+  <div class="sec-h" style="margin-top:26px" data-i18n="sec.relNotes">Release notes</div>
   <details class="detail" id="relNotes">
-    <summary>Version history &mdash; click to expand</summary>
+    <summary data-i18n="det.relSummary">Version history &mdash; click to expand</summary>
     <div class="detail-body">
-      <table class="dtable"><thead><tr><th style="width:90px">Version</th><th style="width:96px">Date</th><th>Changes</th></tr></thead><tbody>
+      <table class="dtable"><thead><tr><th style="width:90px" data-i18n="tbl.version">Version</th><th style="width:96px" data-i18n="tbl.date">Date</th><th data-i18n="tbl.changes">Changes</th></tr></thead><tbody>
+        <tr><td class="name">v1.2</td><td>Jul 2026</td><td><b>Multilingual UI</b> — English, Italian, Spanish, French and German. The language comes from a header picker that remembers your choice; failing that from <code>Config!SETTINGS</code> &ldquo;Language&rdquo;; failing that from the browser. Number, date and month-name formatting follow the chosen language unless <code>Config</code> names an explicit <code>Locale</code>, which still wins. Category and subcategory names are never translated &mdash; they are shown exactly as typed in the workbook. Privacy-mode figure matching is now rebuilt from the active locale&rsquo;s thousands/decimal separators and unit words, so blurring still catches every figure outside English. Help badges are keyed off <code>data-help</code> instead of matching English title text. Adding a language is one entry in <code>LANGS</code> and one block in <code>DICT</code>.</td></tr>
         <tr><td class="name">v1.1</td><td>Jul 2026</td><td>Single common version for private and public use. Every owner-specific value moved out of the code and into the workbook&rsquo;s <code>Config</code> sheet: currency symbol, locale, owner name, category order, wealth groups, card-repayment accounts, history window and the alert thresholds. Removed the dead alpha-era UI that no longer had anything to draw into. Reconciled three contradictory budget-pace thresholds into one configurable pair. The liabilities chart now splits out whichever debt dominates instead of matching on the word &ldquo;mortgage&rdquo;. Same file ships here and in the public repo.</td></tr>
         <tr><td class="name">v1.0</td><td>Jul 2026</td><td>Decision-first redesign wired directly to the workbook. <b>Overview</b>: on-track verdict, safe-to-spend, hero deltas, auto-insights, net-liquidity goal, 12-month cash-flow forecast, consolidated category trend, wealth donut, click-to-drill budget. <b>Analyst</b>: month-end cash, savings rate, net savings, expenses-by-subcategory (bars + 12-mo diamonds + trend arrows), per-category small multiples, and a collapsible balance sheet / bills / affordability panel. Categories and wealth groups driven by a <code>Config</code> sheet (auto-derived when absent). Continuous monthly + quarterly axes, privacy mode, and help badges throughout.</td></tr>
         <tr><td class="name">Alphas</td><td>2026</td><td>Earlier single-scroll dashboard iterations (net-worth &amp; spending tabs, 30+ charts) &mdash; archived.</td></tr>
       </tbody></table>
-      <div style="font-size:12px;color:#8a8a9a;margin-top:10px">Add a new row here whenever the dashboard changes, so the history travels with the file.</div>
+      <div style="font-size:12px;color:#8a8a9a;margin-top:10px" data-i18n="rel.note">Add a new row here whenever the dashboard changes, so the history travels with the file.</div>
     </div>
   </details>
 
-  <div class="appfooter">&copy; 2026 Filomeno Martina &middot; Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. All figures are read from your own workbook and stay in your browser &mdash; nothing is uploaded or embedded.</div>
+  <div class="appfooter">&copy; 2026 Filomeno Martina &middot; Licensed under <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noopener">CC BY 4.0</a>. <span data-i18n="foot.text">All figures are read from your own workbook and stay in your browser &mdash; nothing is uploaded or embedded.</span></div>
 </div>
 
 <script>
@@ -288,18 +767,29 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
   /* Built from the configured currency symbol so privacy mode keeps blurring money
      when the workbook is not in sterling. Rebuilt via __pvSetCurrency on load. */
   var RE;
-  function buildRE(sym){
-    var esc=String(sym||'£').replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
-    RE=new RegExp('('+esc+'\\s?\\d[\\d,]*(?:\\.\\d+)?\\s?[km]?'   /* £1,234 · £1.2m  */
-      +'|\\b\\d{1,3}(?:,\\d{3})+(?:\\.\\d+)?\\b'                   /* 1,234           */
-      +'|\\b\\d+(?:\\.\\d+)?\\s?%'                                 /* 18% · 2.4 %     */
-      +'|\\b\\d+(?:\\.\\d+)?[km]\\b'                               /* 24k · 1.5m      */
-      +'|\\b\\d+(?:\\.\\d+)?\\s?(?:mo|mos|pt|pts|yr|yrs)\\b'       /* 6.4 mo · 2.4pt  */
+  /* Group/decimal separators and the unit words both change with the language, so the
+     figure-matching regex is rebuilt from the active locale — otherwise an Italian
+     "€1.234,56" would only get its first digit blurred. */
+  function buildRE(sym,loc){
+    var esc=function(x){return String(x).replace(/[.*+?^${}()|[\]\\]/g,'\\$&');};
+    var g=',',d='.';
+    try{ (new Intl.NumberFormat(loc)).formatToParts(12345.6).forEach(function(p){
+      if(p.type==='group')g=p.value; if(p.type==='decimal')d=p.value; }); }catch(e){}
+    var G=esc(g), D=esc(d), S=esc(sym||'£');
+    var units=['mo','mos','pt','pts','yr','yrs'];
+    try{ ['u.mo','u.pt'].forEach(function(k){ var v=window.I18N&&I18N.t(k); if(v&&units.indexOf(v)<0)units.push(v); }); }catch(e){}
+    units.sort(function(a,b){return b.length-a.length;});   /* longest first: 'mos' must win over 'mo' */
+    var U=units.map(esc).join('|');
+    RE=new RegExp('('+S+'\\s?\\d[\\d'+G+']*(?:'+D+'\\d+)?\\s?[km]?'   /* £1,234 · £1.2m  */
+      +'|\\b\\d{1,3}(?:'+G+'\\d{3})+(?:'+D+'\\d+)?\\b'               /* 1,234           */
+      +'|\\b\\d+(?:'+D+'\\d+)?\\s?%'                                 /* 18% · 2.4 %     */
+      +'|\\b\\d+(?:'+D+'\\d+)?[km]\\b'                               /* 24k · 1.5m      */
+      +'|\\b\\d+(?:'+D+'\\d+)?\\s?(?:'+U+')'                         /* 6.4 mo · 2,4 pt */
       +')','g');
   }
   buildRE('£');
-  window.__pvSetCurrency=function(sym){ buildRE(sym); };
-  var btn=document.createElement('button'); btn.id='pvToggle'; btn.type='button'; btn.title='Toggle privacy mode (H)';
+  window.__pvSetCurrency=function(sym,loc){ buildRE(sym,loc); };
+  var btn=document.createElement('button'); btn.id='pvToggle'; btn.type='button'; btn.title=I18N.t('pv.title');
   function wrapFigures(){
     /* re-runnable: only wraps text that isn't already inside a .pv span, so it can be called again
        after the workbook loads (which replaces innerHTML and inserts fresh, unwrapped figures). */
@@ -346,13 +836,16 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
   }
   function apply(on){
     document.body.classList.toggle('privacy',on);
-    btn.textContent=on?'\ud83d\udc41 Show figures':'\ud83d\ude48 Hide figures';
+    btn.textContent=I18N.t(on?'pv.show':'pv.hide');
     btn.classList.toggle('on',on);
     try{ localStorage.setItem(KEY,on?'1':'0'); }catch(e){}
     setCharts(on);
   }
   btn.onclick=function(){ apply(!document.body.classList.contains('privacy')); };
   /* re-wrap figures + re-hide chart axes after the live layer repopulates the DOM on workbook load */
+  /* re-label the toggle after a language switch (the button text is not in the DOM tree we translate) */
+  window.__pvRelabel=function(){ try{ btn.title=I18N.t('pv.title');
+    btn.textContent=I18N.t(document.body.classList.contains('privacy')?'pv.show':'pv.hide'); }catch(e){} };
   window.__pvRewrap=function(){ try{ wrapFigures(); if(document.body.classList.contains('privacy')) setCharts(true); }catch(e){} };
   document.addEventListener('keydown',function(e){
     if((e.key==='h'||e.key==='H')&&!e.metaKey&&!e.ctrlKey&&!e.altKey){
@@ -382,15 +875,22 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
      of truth — no formatter below hardcodes a symbol, so changing the workbook's
      "Currency symbol" row re-denominates the whole dashboard, privacy mode included. */
   var CUR='£', LOC=undefined;
-  function setLocaleFrom(cfg){ CUR=cfg.set.currency||'£'; LOC=cfg.set.locale||undefined;
-    try{ if(window.__pvSetCurrency) window.__pvSetCurrency(CUR); }catch(e){} }
+  var L=function(k,v){ return window.I18N?I18N.t(k,v):k; };
+  /* Locale follows the UI language unless Config!SETTINGS names one explicitly. */
+  function setLocaleFrom(cfg){ CUR=cfg.set.currency||'£';
+    LOC=cfg.set.locale||(window.I18N?I18N.defaultLocale():undefined);
+    try{ if(window.__pvSetCurrency) window.__pvSetCurrency(CUR,LOC); }catch(e){} }
+  /* locale-aware decimal formatting: 1.5k in English, 1,5k in Italian */
+  var nfd=function(n,dp){ try{ return Number(n).toLocaleString(LOC,{minimumFractionDigits:dp,maximumFractionDigits:dp}); }
+    catch(e){ return Number(n).toFixed(dp); } };
+  var nlo=function(n){ try{ return Number(n).toLocaleString(LOC,{maximumFractionDigits:3}); }catch(e){ return String(n); } };
   var money=function(v){return CUR+v;};
   var gbp=function(n){return n==null?'—':CUR+Math.round(n).toLocaleString(LOC);};
-  var gM=function(n){return n==null?'—':(Math.abs(n)>=1e6?CUR+(n/1e6).toFixed(2)+'m':gbp(n));};
-  var fmtV=function(v){return CUR+(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+'m':Math.abs(v)>=1000?Math.round(v/1000)+'k':Math.round(v));};
-  var fmtV1=function(v){return CUR+(Math.abs(v)>=1e6?(v/1e6).toFixed(2)+'m':(v/1000).toFixed(1)+'k');};
-  var kTick=function(v){return CUR+(v/1000)+'k';};
-  var unitTick=function(v){return CUR+v;};
+  var gM=function(n){return n==null?'—':(Math.abs(n)>=1e6?CUR+nfd(n/1e6,2)+'m':gbp(n));};
+  var fmtV=function(v){return CUR+(Math.abs(v)>=1e6?nfd(v/1e6,2)+'m':Math.abs(v)>=1000?nlo(Math.round(v/1000))+'k':nlo(Math.round(v)));};
+  var fmtV1=function(v){return CUR+(Math.abs(v)>=1e6?nfd(v/1e6,2)+'m':nfd(v/1000,1)+'k');};
+  var kTick=function(v){return CUR+nlo(v/1000)+'k';};
+  var unitTick=function(v){return CUR+nlo(v);};
   /* Date formatting always goes through LOC so the file is not locked to one region. */
   var dfmt=function(d,opts){try{return d.toLocaleDateString(LOC,opts);}catch(e){return d.toLocaleDateString(undefined,opts);}};
   var dtfmt=function(d,opts){try{return d.toLocaleString(LOC,opts);}catch(e){return d.toLocaleString(undefined,opts);}};
@@ -421,7 +921,13 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     });
   }};
   Chart.register(barLabels);
+  /* Month abbreviations follow the active locale. Every label producer AND every label
+     parser below reads this same array, so they stay consistent in any language. */
   var MONS3=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  function refreshMonthNames(){
+    try{ var f=new Intl.DateTimeFormat(LOC,{month:'short'});
+      MONS3=[0,1,2,3,4,5,6,7,8,9,10,11].map(function(m){ return f.format(new Date(2021,m,1)); }); }catch(e){}
+  }
   // continuous-month helpers: fill every calendar month between first and last so no month is skipped on the x-axis (fix #1)
   function addMon(ym,n){var p=String(ym).split('-');var d=new Date(+p[0],(+p[1]-1)+n,1);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
   function contRange(minYM,maxYM){var out=[];if(!minYM||!maxYM)return out;var m=minYM;var guard=0;while(m<=maxYM&&guard++<600){out.push(m);m=addMon(m,1);}return out;}
@@ -451,7 +957,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
   /* ---------------------------------------------------------------------------
      Optional 'Config' sheet — the ONLY place personal values live. Sections:
 
-       SETTINGS        Currency symbol | Locale | Owner | History from
+       SETTINGS        Currency symbol | Locale | Language | Owner | History from
        WEALTH GROUPS   match keywords  | label  | colour
        CATEGORIES      name            | colour | order
        ACCOUNT GROUPS  match keywords  | role
@@ -462,7 +968,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
      the data. Nothing below is hardcoded to any one person's accounts.
      --------------------------------------------------------------------------- */
   var DEFAULTS={
-    currency:'£', locale:undefined, owner:'', historyFrom:'',
+    currency:'£', locale:undefined, language:'', owner:'', historyFrom:'',
     runwayWarnMonths:2, paceWarnPct:100, paceAlertPct:110,
     insightMinSpend:40, insightMinChangePct:15
   };
@@ -493,6 +999,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       if(sec==='S'){
         if(al.indexOf('currency')===0&&typeof b==='string'&&b.trim()) out.set.currency=b.trim();
         else if(al.indexOf('locale')===0&&typeof b==='string'&&b.trim()) out.set.locale=b.trim();
+        else if(al.indexOf('language')===0&&typeof b==='string'&&b.trim()) out.set.language=b.trim().toLowerCase().slice(0,2);
         else if(al.indexOf('owner')===0&&typeof b==='string') out.set.owner=b.trim();
         else if(al.indexOf('history from')===0&&b) out.set.historyFrom=String(b).trim();
       }
@@ -567,7 +1074,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var open=(STATE.netliq!=null)?STATE.netliq:(cash+sav);   // opening = NET LIQUID ASSETS (liquid − short-term debts), live from tracker
     var salary=(DB?findByLabel(DB,'net pay','B'):null)||0;
     var paydayOverride=DB?findByLabel(DB,'payday','B'):null;   // optional: a fixed day-of-month on the Dashboard sheet overrides last-working-day
-    var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var mons=MONS3;
     function daysIn(y,m){return new Date(y,m+1,0).getDate();}
     function lastWorkingDay(y,m){var d=new Date(y,m+1,0),w=d.getDay();if(w===6)d.setDate(d.getDate()-1);else if(w===0)d.setDate(d.getDate()-2);return d.getDate();}
     var today=new Date(); var start=new Date(today.getFullYear(),today.getMonth(),today.getDate());
@@ -611,24 +1118,24 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     return (best&&best.pct>=TH.insightMinChangePct)?best:null; }
   function renderOverview(wb,hist){ var TH=readConfig(wb).set; var S=STATE, G=function(id){return document.getElementById(id);}, T=function(id,v){var e=G(id);if(e)e.textContent=v;}; var mkc=function(id,cfg){if(!window.Chart)return;var ex=Chart.getChart(id);if(ex)ex.destroy();var el=document.getElementById(id);if(el)return new Chart(el,cfg);};
     function delta(id,val,goodUp,unit,ref){var e=G(id);if(!e)return; if(val==null||!isFinite(val)){e.innerHTML='';return;} var up=val>=0,good=goodUp?up:!up,arrow=up?'▲':'▼';
-      var mag=unit==='money'?gbp(Math.abs(val)):(unit==='%'?Math.round(Math.abs(val))+'%':(unit==='pt'?Math.abs(val).toFixed(1)+'pt':(unit==='mo'?Math.abs(val).toFixed(1)+' mo':Math.abs(val))));
+      var mag=unit==='money'?gbp(Math.abs(val)):(unit==='%'?Math.round(Math.abs(val))+'%':(unit==='pt'?nfd(Math.abs(val),1)+L('u.pt'):(unit==='mo'?nfd(Math.abs(val),1)+' '+L('u.mo'):Math.abs(val))));
       e.className='ovdelta'; e.style.color=good?'#4ade80':'#f87171'; e.style.background=good?'rgba(74,222,128,.12)':'rgba(248,113,113,.12)'; e.innerHTML=arrow+' '+mag+(ref?' '+ref:''); }
     T('ovNW', S.networth!=null?gM(S.networth):'—');
     T('ovNW s'.replace(' ',''), '');
-    if(S.gross&&S.netliq!=null) T('ovNWs', Math.round((S.gross-S.netliq)/S.gross*100)+'% illiquid');
+    if(S.gross&&S.netliq!=null) T('ovNWs', L('t.illiquid',{p:Math.round((S.gross-S.netliq)/S.gross*100)}));
     T('ovNL', S.netliq!=null?gbp(S.netliq):'—');
     var sr=null,srPrev=null; if(hist&&hist.length){var hv=hist.filter(function(h){return typeof h.savpct==='number';}); if(hv.length){sr=hv[hv.length-1].savpct; var p3=hv.slice(-4,-1); if(p3.length)srPrev=p3.reduce(function(a,b){return a+b.savpct;},0)/p3.length;}}
-    T('ovSR', sr!=null?Math.round(sr*100)+'%':'—'); if(sr!=null&&srPrev!=null)delta('ovSRd',(sr-srPrev)*100,true,'pt','vs 3-mo');
+    T('ovSR', sr!=null?Math.round(sr*100)+'%':'—'); if(sr!=null&&srPrev!=null)delta('ovSRd',(sr-srPrev)*100,true,'pt',L('d.vs3mo'));
     var rw=(S.netliq!=null&&S.recMo)?S.netliq/S.recMo:null;
-    T('ovRW', (rw!=null&&isFinite(rw)&&rw>0)?rw.toFixed(1)+' mo':(S.netliq!=null&&S.netliq<=0?'0 mo':'—'));
+    T('ovRW', (rw!=null&&isFinite(rw)&&rw>0)?nfd(rw,1)+' '+L('u.mo'):(S.netliq!=null&&S.netliq<=0?'0 '+L('u.mo'):'—'));
     var safe=null,budg=null; if(S.budgetTotal!=null&&S.actualTotal!=null){safe=S.budgetTotal-S.actualTotal;budg=S.budgetTotal;} else if(S.recMo!=null&&S.actualTotal!=null){safe=S.recMo-S.actualTotal;budg=S.recMo;}
     T('ovSafe', safe!=null?gbp(Math.max(0,safe)):'—');
     var pe=S.pctElapsed; if(pe!=null&&pe>1)pe=pe/100; var dl=(pe!=null)?Math.max(0,Math.round((1-pe)*30)):null;
-    T('ovSafeSub', (safe!=null&&budg!=null)?(gbp(Math.max(0,budg-safe))+' of '+gbp(budg)+' used'+(dl!=null?' · ~'+dl+' days left':'')):'');
+    T('ovSafeSub', (safe!=null&&budg!=null)?(L('safe.used',{used:gbp(Math.max(0,budg-safe)),budget:gbp(budg)})+(dl!=null?' · '+L('safe.days',{n:dl}):'')):'');
     var sb=G('ovSafeBar'); if(sb&&budg)sb.style.width=Math.max(0,Math.min(100,Math.round((budg-safe)/budg*100)))+'%';
-    try{var dln=readDLcol(wb.Sheets['Daily Log'],'net liquid'); if(dln.length>=2)delta('ovNLd',dln[dln.length-1]-dln[dln.length-2],true,'money','MoM');}catch(e){}
-    try{var nw=readDLcol(wb.Sheets['Daily Log'],'net worth'); if(nw.length>=2)delta('ovNWd',nw[nw.length-1]-nw[nw.length-2],true,'money','MoM');}catch(e){}
-    if(S.goal){var liq=(S.netliq!=null?S.netliq:S.reserve)||0; var pg=Math.max(0,Math.min(100,Math.round(liq/S.goal*100))); T('ovGoalNow',gbp(liq)); T('ovGoalTgt','Goal '+gbp(S.goal)); var gb=G('ovGoalBar'); if(gb)gb.style.width=pg+'%'; T('ovGoalNote',pg+'% of goal'); }
+    try{var dln=readDLcol(wb.Sheets['Daily Log'],'net liquid'); if(dln.length>=2)delta('ovNLd',dln[dln.length-1]-dln[dln.length-2],true,'money',L('d.mom'));}catch(e){}
+    try{var nw=readDLcol(wb.Sheets['Daily Log'],'net worth'); if(nw.length>=2)delta('ovNWd',nw[nw.length-1]-nw[nw.length-2],true,'money',L('d.mom'));}catch(e){}
+    if(S.goal){var liq=(S.netliq!=null?S.netliq:S.reserve)||0; var pg=Math.max(0,Math.min(100,Math.round(liq/S.goal*100))); T('ovGoalNow',gbp(liq)); T('ovGoalTgt',L('goal.prefix',{x:gbp(S.goal)})); var gb=G('ovGoalBar'); if(gb)gb.style.width=pg+'%'; T('ovGoalNote',L('goal.pct',{p:pg})); }
     if(window.__cat){var Cc=window.__cat,_m3=function(a){return a.map(function(_,i){return i<2?null:Math.round((a[i]+a[i-1]+a[i-2])/3);});};
       // 24-month window ending at the SELECTED month (fix #2), MA computed on the full series so the window's left edge stays continuous
       var _mYM=Cc.monthsYM||[], _end=_mYM.indexOf(Cc.curM); if(_end<0)_end=_mYM.length-1;
@@ -644,11 +1151,11 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       var _yMin=Math.floor(_lo/_step)*_step, _yMax=Math.ceil(_hi/_step)*_step;
       var _ovZero={id:'ovZero',afterDraw:function(ch){var ys=ch.scales.y;if(!ys)return;var yp=ys.getPixelForValue(0),A=ch.chartArea,ctx=ch.ctx;if(!isFinite(yp)||yp<A.top-1||yp>A.bottom+1)return;ctx.save();ctx.strokeStyle='#8a8a9a';ctx.lineWidth=2.5;ctx.beginPath();ctx.moveTo(A.left,yp);ctx.lineTo(A.right,yp);ctx.stroke();ctx.restore();}};
       var _fmtYM=function(l){var p=String(l).split('-');return (MONS3[(+p[1]||1)-1]||l)+" '"+String(p[0]).slice(2);};
-      window.__ovTrend=function(){ if(!document.getElementById('ovTrend'))return; mkc('ovTrend',{type:'line',plugins:[_ovZero,quarterSep],data:{labels:_wYM,datasets:Cc.cats.map(function(c){return {label:c,data:(window._ovSmooth?_wMA[c]:_wRaw[c]),borderColor:Cc.col[c],backgroundColor:'transparent',borderWidth:1.8,tension:.3,pointRadius:0,spanGaps:false};})},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#c7c7d3',usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:12}}},tooltip:{callbacks:{title:function(it){return _fmtYM(it[0].label);}}}},scales:{x:{grid:{color:GRIDM},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:qTick}},y:{min:_yMin,max:_yMax,ticks:{stepSize:_step,color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+(v/1000).toFixed(1)+'k';}},grid:{color:'#1e1e2a'}}}}}); };
+      window.__ovTrend=function(){ if(!document.getElementById('ovTrend'))return; mkc('ovTrend',{type:'line',plugins:[_ovZero,quarterSep],data:{labels:_wYM,datasets:Cc.cats.map(function(c){return {label:c,data:(window._ovSmooth?_wMA[c]:_wRaw[c]),borderColor:Cc.col[c],backgroundColor:'transparent',borderWidth:1.8,tension:.3,pointRadius:0,spanGaps:false};})},options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:'#c7c7d3',usePointStyle:true,pointStyle:'line',boxWidth:22,font:{size:12}}},tooltip:{callbacks:{title:function(it){return _fmtYM(it[0].label);}}}},scales:{x:{grid:{color:GRIDM},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:qTick}},y:{min:_yMin,max:_yMax,ticks:{stepSize:_step,color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+nfd(v/1000,1)+'k';}},grid:{color:'#1e1e2a'}}}}}); };
       window.__ovTrend(); }
     (function(){ if(!document.getElementById('ovDonut'))return; var comp=(S.wealthComp||[]).filter(function(x){return x[2]>0;});
       var callout={id:'ovcallout',afterDatasetsDraw:function(ch){var meta=ch.getDatasetMeta(0),ctx=ch.ctx,ds=ch.data.datasets[0].data,labels=ch.data.labels,cols=ch.data.datasets[0].backgroundColor,tot=ds.reduce(function(a,b){return a+(b||0);},0)||1,priv=document.body.classList.contains('privacy'),W=ch.width;
-        var fk=function(v){return v>=1e6?CUR+(v/1e6).toFixed(2)+'M':(v>=1000?CUR+Math.round(v/1000)+'k':CUR+Math.round(v));};
+        var fk=function(v){return v>=1e6?CUR+nfd(v/1e6,2)+'M':(v>=1000?CUR+nlo(Math.round(v/1000))+'k':CUR+nlo(Math.round(v)));};
         var items=[]; meta.data.forEach(function(arc,i){if(!ds[i])return;var ang=(arc.startAngle+arc.endAngle)/2;items.push({i:i,ang:ang,cx:arc.x,cy:arc.y,r:arc.outerRadius,right:Math.cos(ang)>=0,y:arc.y+Math.sin(ang)*(arc.outerRadius+16)});});
         var GAP=34; ['R','L'].forEach(function(side){var arr=items.filter(function(t){return side==='R'?t.right:!t.right;}).sort(function(a,b){return a.y-b.y;}); for(var k=1;k<arr.length;k++){if(arr[k].y-arr[k-1].y<GAP)arr[k].y=arr[k-1].y+GAP;}});
         ctx.save(); items.forEach(function(t){var r=t.r,x0=t.cx+Math.cos(t.ang)*r,y0=t.cy+Math.sin(t.ang)*r,edge=t.right?(t.cx+r+8):(t.cx-r-8),lx=t.right?(W-6):6;
@@ -665,22 +1172,22 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     if(window.__bva){var Bb=window.__bva,pe2=S.pctElapsed; if(pe2!=null&&pe2>1)pe2=pe2/100; if(!pe2)pe2=0.5; var rws=Bb.rows.filter(function(r){return r.budget>0||r.actual>0;});
       var eb=G('ovBudget'); if(eb)eb.innerHTML=rws.map(function(r){var pace=r.budget>0?Math.round(r.actual/(r.budget*pe2)*100):null,col=pace==null?'#9a9aa8':(pace>TH.paceAlertPct?'#f87171':pace>TH.paceWarnPct?'#fbbf24':'#4ade80'),w=r.budget>0?Math.min(100,Math.round(r.actual/r.budget*100)):0;
         return '<div onclick="__ovDrill(\''+r.cat.replace(/\x27/g,'')+'\')" style="display:grid;grid-template-columns:130px 1fr 96px;gap:12px;align-items:center;padding:9px 6px;border-radius:8px;cursor:pointer" onmouseover="this.style.background=\'#1c1c28\'" onmouseout="this.style.background=\'\'"><div style="font-size:13px;color:#e6e6ef;font-weight:600">'+r.cat+'</div><div style="height:16px;background:#0f0f13;border:1px solid #2a2a3a;border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:'+w+'%;background:'+col+'"></i></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+col+'">'+(pace==null?'—':pace+'%')+'</div><div style="font-size:12px;color:#9a9aa8">'+gbp(r.actual)+' / '+gbp(r.budget)+'</div></div></div>';}).join('');
-      window.__ovDrill=function(cat){ window.__ovDrillCat=cat; try{var SH=wb.Sheets['Transactions'],A=XLSX.utils.sheet_to_json(SH,{header:1}),rx=[]; for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue; if(String(r[1])===Bb.month&&(r[5]||'')===cat)rx.push([String(r[3]||''),(+r[4]||0)]);} rx.sort(function(a,b){return b[1]-a[1];}); var d=G('ovDrill'); if(d){var _tot=rx.reduce(function(a,t){return a+t[1];},0); G('ovDrillTitle').textContent=cat+' — '+Bb.month+' · '+rx.length+' transactions · '+gbp(_tot); var _l=G('ovDrillList'); _l.style.maxHeight='360px'; _l.style.overflowY='auto'; _l.style.paddingRight='14px'; _l.innerHTML=rx.map(function(t){return '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #1e1e2a;color:#c7c7d3"><span>'+t[0]+'</span><span style="color:#fff">'+gbp(t[1])+'</span></div>';}).join(''); d.style.display='block';} }catch(e){} };
+      window.__ovDrill=function(cat){ window.__ovDrillCat=cat; try{var SH=wb.Sheets['Transactions'],A=XLSX.utils.sheet_to_json(SH,{header:1}),rx=[]; for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue; if(String(r[1])===Bb.month&&(r[5]||'')===cat)rx.push([String(r[3]||''),(+r[4]||0)]);} rx.sort(function(a,b){return b[1]-a[1];}); var d=G('ovDrill'); if(d){var _tot=rx.reduce(function(a,t){return a+t[1];},0); G('ovDrillTitle').textContent=L('drill.title',{cat:cat,month:Bb.month,n:rx.length,total:gbp(_tot)}); var _l=G('ovDrillList'); _l.style.maxHeight='360px'; _l.style.overflowY='auto'; _l.style.paddingRight='14px'; _l.innerHTML=rx.map(function(t){return '<div style="display:grid;grid-template-columns:1fr auto;gap:8px;font-size:12.5px;padding:5px 0;border-bottom:1px solid #1e1e2a;color:#c7c7d3"><span>'+t[0]+'</span><span style="color:#fff">'+gbp(t[1])+'</span></div>';}).join(''); d.style.display='block';} }catch(e){} };
       // keep an open drill in sync with the selected month
       if(window.__ovDrillCat){var _dd=G('ovDrill'); if(_dd&&_dd.style.display!=='none') window.__ovDrill(window.__ovDrillCat);} }
     if(window.__fc&&document.getElementById('ovFc')){var Fd=window.__fc,mnV=Math.min.apply(null,Fd.data),mnI=Fd.data.indexOf(mnV);
-      var mpl={id:'ovmin',afterDatasetsDraw:function(ch){if(document.body.classList.contains('privacy'))return;var xs=ch.scales.x,ys=ch.scales.y,ctx=ch.ctx,x=xs.getPixelForValue(mnI),y=ys.getPixelForValue(mnV);if(!isFinite(x)||!isFinite(y))return;ctx.save();ctx.fillStyle='#f87171';ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText('low '+gbp(mnV),x,y-9);ctx.restore();}};
-      mkc('ovFc',{type:'line',plugins:[mpl,fcGrid],data:{labels:Fd.labels,datasets:[{data:Fd.data,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.10)',fill:true,borderWidth:2,pointRadius:0,tension:.15,segment:{borderColor:function(c){return (c.p0.parsed.y<0||c.p1.parsed.y<0)?'#f87171':'#a78bfa';}}}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return gbp(c.raw);}}}},scales:{x:{grid:{display:false},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:fcTick}},y:{grid:{color:'#1e1e2a'},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+(v/1000).toFixed(0)+'k';}}}}}}); }
+      var mpl={id:'ovmin',afterDatasetsDraw:function(ch){if(document.body.classList.contains('privacy'))return;var xs=ch.scales.x,ys=ch.scales.y,ctx=ch.ctx,x=xs.getPixelForValue(mnI),y=ys.getPixelForValue(mnV);if(!isFinite(x)||!isFinite(y))return;ctx.save();ctx.fillStyle='#f87171';ctx.beginPath();ctx.arc(x,y,4,0,7);ctx.fill();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';ctx.fillText(L('fc.low',{x:gbp(mnV)}),x,y-9);ctx.restore();}};
+      mkc('ovFc',{type:'line',plugins:[mpl,fcGrid],data:{labels:Fd.labels,datasets:[{data:Fd.data,borderColor:'#a78bfa',backgroundColor:'rgba(167,139,250,.10)',fill:true,borderWidth:2,pointRadius:0,tension:.15,segment:{borderColor:function(c){return (c.p0.parsed.y<0||c.p1.parsed.y<0)?'#f87171':'#a78bfa';}}}]},options:{maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return gbp(c.raw);}}}},scales:{x:{grid:{display:false},ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,callback:fcTick}},y:{grid:{color:'#1e1e2a'},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return CUR+nfd(v/1000,0)+'k';}}}}}}); }
 
     var ins=[];
-    try{var dev=topCatDeviation(wb,S.repMonth); if(dev)ins.push({c:'#fbbf24',h:'<b>'+dev.cat+' '+gbp(dev.cur)+'</b> this month — '+(dev.pct>=0?'up':'down')+' '+Math.abs(dev.pct)+'% vs your 12-month average ('+gbp(dev.avg)+').'});}catch(e){}
-    if(S.networth!=null&&S.netliq!=null){var lh=S.largestHolding,bp=(lh&&S.gross)?Math.round(lh[1]/S.gross*100):null; ins.push({c:'#5b9cf6',h:'Wealth is concentrated: <b>'+gM(S.networth)+'</b> net worth, but only <b>'+gbp(S.netliq)+'</b> liquid'+(bp?' — '+lh[0]+' is '+bp+'% of assets.':'.')});}
-    if(hist&&hist.length){var st=0;for(var i=hist.length-1;i>=0;i--){if(typeof hist[i].netsav==='number'&&hist[i].netsav>0)st++;else break;} if(st>=2)ins.push({c:'#4ade80',h:'<b>'+st+'-month saving streak</b> — you moved money to savings every month. Keep it going.'});}
+    try{var dev=topCatDeviation(wb,S.repMonth); if(dev)ins.push({c:'#fbbf24',h:L('ins.cat',{cat:dev.cat,cur:gbp(dev.cur),dir:L(dev.pct>=0?'ins.up':'ins.down'),pct:Math.abs(dev.pct),avg:gbp(dev.avg)})});}catch(e){}
+    if(S.networth!=null&&S.netliq!=null){var lh=S.largestHolding,bp=(lh&&S.gross)?Math.round(lh[1]/S.gross*100):null; ins.push({c:'#5b9cf6',h:L('ins.conc',{nw:gM(S.networth),nl:gbp(S.netliq)})+(bp?L('ins.concTail',{name:lh[0],p:bp}):'.')});}
+    if(hist&&hist.length){var st=0;for(var i=hist.length-1;i>=0;i--){if(typeof hist[i].netsav==='number'&&hist[i].netsav>0)st++;else break;} if(st>=2)ins.push({c:'#4ade80',h:L('ins.streak',{n:st})});}
     var iw=G('ovInsights'); if(iw)iw.innerHTML=ins.slice(0,3).map(function(x){return '<div class="ovic" style="border-left-color:'+x.c+'">'+x.h+'</div>';}).join('');
-    var vt='On track',vs='',dot='#4ade80';
-    if(rw!=null&&rw<TH.runwayWarnMonths){dot='#fbbf24';vt='Watch your cash this week';vs='About '+rw.toFixed(1)+' months of liquid runway'+(safe!=null?' · '+gbp(Math.max(0,safe))+' safe to spend this month':'')+'.';}
-    else if(S.pace!=null&&S.pace>TH.paceWarnPct){dot='#fbbf24';vt='Spending ahead of pace';vs="You've used "+S.pace+'% of your day-proportional allowance this month.';}
-    else {vs=(safe!=null?gbp(Math.max(0,safe))+' left to spend this month':'')+(sr!=null?' · saving '+Math.round(sr*100)+'%':'')+(S.pace!=null?' · '+S.pace+'% of pace used':'')+'.';}
+    var vt=L('v.ontrack'),vs='',dot='#4ade80';
+    if(rw!=null&&rw<TH.runwayWarnMonths){dot='#fbbf24';vt=L('v.watch');vs=L('v.watchSub',{n:nfd(rw,1)})+(safe!=null?' · '+L('v.watchSafe',{x:gbp(Math.max(0,safe))}):'')+'.';}
+    else if(S.pace!=null&&S.pace>TH.paceWarnPct){dot='#fbbf24';vt=L('v.pace');vs=L('v.paceSub',{p:S.pace});}
+    else {vs=(safe!=null?L('v.okLeft',{x:gbp(Math.max(0,safe))}):'')+(sr!=null?' · '+L('v.okSaving',{p:Math.round(sr*100)}):'')+(S.pace!=null?' · '+L('v.okPace',{p:S.pace}):'')+'.';}
     T('ovVt',vt); T('ovVs',vs); var d=G('ovDot'); if(d)d.style.background=dot;
   }
   // ---- Curated ANALYST view: month-end cash, savings rate, net savings, combined subcategory chart, per-category small multiples ----
@@ -702,15 +1209,15 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var _srReal=srArr.filter(function(v){return v!=null;});
     var _srLo=_srReal.length?Math.min.apply(null,_srReal):0, _srHi=_srReal.length?Math.max.apply(null,_srReal):0;
     var _srClip=(_srLo<-100||_srHi>100), _srMin=_srClip?-100:undefined, _srMax=_srClip?100:undefined;
-    var _srMarks={id:'srMarks',afterDatasetsDraw:function(ch){if(!_srClip||document.body.classList.contains('privacy'))return;var A=ch.chartArea,ctx=ch.ctx,meta=ch.getDatasetMeta(0);ctx.save();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';srArr.forEach(function(v,i){if(v==null||!meta.data[i]||(v<=100&&v>=-100))return;var over=v>100;var px=Math.min(Math.max(meta.data[i].x,A.left+30),A.right-30);ctx.fillStyle=CC.green;ctx.textBaseline=over?'top':'bottom';ctx.fillText((over?'▲ ':'▼ ')+v.toFixed(0)+'%',px,over?A.top+2:A.bottom-2);});ctx.restore();}};
-    makeChart('savrate',{type:'line',plugins:[quarterSep,_srMarks],data:{labels:months,datasets:[{label:'liquid',data:srArr,borderColor:CC.green,backgroundColor:'rgba(74,222,128,.10)',fill:true,tension:.3,pointRadius:0,borderWidth:2,pointStyle:'line',spanGaps:false},{label:'incl. pension',data:srInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',fill:false,tension:.3,pointRadius:0,borderWidth:2,spanGaps:false}]},options:{maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return c.raw==null?'':(c.dataset.label?c.dataset.label+': ':'')+c.raw.toFixed(1)+'%';}}}},scales:{x:_qx(qInitTick),y:{min:_srMin,max:_srMax,grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return v+'%';}}}}}});
-    makeChart('netsav',{type:'bar',plugins:[quarterSep],data:{labels:months,datasets:[{label:'liquid',pointStyle:'rect',data:nsArr,backgroundColor:nsArr.map(function(v){return (v==null)?'transparent':(v>=0?'rgba(74,222,128,.65)':'rgba(248,113,113,.65)');})},{type:'line',label:'incl. pension',data:nsInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',borderWidth:2,pointRadius:0,fill:false,tension:.3,spanGaps:false}]},options:{maintainAspectRatio:false,barLabelMax:0,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return (c.dataset.label?c.dataset.label+': ':'')+gbp(c.raw);}}}},scales:{x:_qx(qTick),y:{grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:kTick}}}}});
+    var _srMarks={id:'srMarks',afterDatasetsDraw:function(ch){if(!_srClip||document.body.classList.contains('privacy'))return;var A=ch.chartArea,ctx=ch.ctx,meta=ch.getDatasetMeta(0);ctx.save();ctx.font='12px -apple-system,sans-serif';ctx.textAlign='center';srArr.forEach(function(v,i){if(v==null||!meta.data[i]||(v<=100&&v>=-100))return;var over=v>100;var px=Math.min(Math.max(meta.data[i].x,A.left+30),A.right-30);ctx.fillStyle=CC.green;ctx.textBaseline=over?'top':'bottom';ctx.fillText((over?'▲ ':'▼ ')+nfd(v,0)+'%',px,over?A.top+2:A.bottom-2);});ctx.restore();}};
+    makeChart('savrate',{type:'line',plugins:[quarterSep,_srMarks],data:{labels:months,datasets:[{label:L('leg.liquid'),data:srArr,borderColor:CC.green,backgroundColor:'rgba(74,222,128,.10)',fill:true,tension:.3,pointRadius:0,borderWidth:2,pointStyle:'line',spanGaps:false},{label:L('leg.inclPension'),data:srInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',fill:false,tension:.3,pointRadius:0,borderWidth:2,spanGaps:false}]},options:{maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return c.raw==null?'':(c.dataset.label?c.dataset.label+': ':'')+nfd(c.raw,1)+'%';}}}},scales:{x:_qx(qInitTick),y:{min:_srMin,max:_srMax,grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:function(v){return nlo(v)+'%';}}}}}});
+    makeChart('netsav',{type:'bar',plugins:[quarterSep],data:{labels:months,datasets:[{label:L('leg.liquid'),pointStyle:'rect',data:nsArr,backgroundColor:nsArr.map(function(v){return (v==null)?'transparent':(v>=0?'rgba(74,222,128,.65)':'rgba(248,113,113,.65)');})},{type:'line',label:L('leg.inclPension'),data:nsInclArr,borderColor:'#fbbf24',backgroundColor:'transparent',borderDash:[5,3],pointStyle:'line',borderWidth:2,pointRadius:0,fill:false,tension:.3,spanGaps:false}]},options:{maintainAspectRatio:false,barLabelMax:0,plugins:{legend:{display:true,position:'bottom',labels:{usePointStyle:true,boxWidth:28,padding:8,font:{size:11},color:'#9a9aa8'}},tooltip:{callbacks:{title:function(it){return it[0].label;},label:function(c){return (c.dataset.label?c.dataset.label+': ':'')+gbp(c.raw);}}}},scales:{x:_qx(qTick),y:{grid:{color:CC.grid},ticks:{color:'#9a9aa8',font:{size:12},callback:kTick}}}}});
     // combined subcategory chart: this-month bars + trailing-12mo avg diamonds + trend arrows
     var SF=window.__subflat||[]; var box=document.getElementById('subcatBox'); if(box)box.style.height=Math.max(420,SF.length*22+50)+'px';
     if(SF.length){
       var diaArrow={id:'daAn',afterDatasetsDraw:function(ch){var meta=ch.getDatasetMeta(0),xs=ch.scales.x,ctx=ch.ctx,A=ch.chartArea,priv=document.body.classList.contains('privacy');ctx.save();ctx.font='12px -apple-system,sans-serif';ctx.textBaseline='middle';
         meta.data.forEach(function(bar,i){var s=SF[i]; if(!s)return; var cur=s.cur,ttm=s.ttm;
-          if(!priv){ctx.fillStyle='#cfcfe0';ctx.textAlign='left';ctx.fillText(CUR+cur,bar.x+7,bar.y);}
+          if(!priv){ctx.fillStyle='#cfcfe0';ctx.textAlign='left';ctx.fillText(CUR+nlo(cur),bar.x+7,bar.y);}
           if(ttm!=null){var xt=xs.getPixelForValue(ttm),y=bar.y; if(xt<A.left)xt=A.left; if(xt>A.right)xt=A.right;
             ctx.fillStyle='#eef0f4';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(xt,y-7.5);ctx.lineTo(xt+7.5,y);ctx.lineTo(xt,y+7.5);ctx.lineTo(xt-7.5,y);ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(0,0,0,.85)';ctx.lineWidth=1.4;ctx.stroke();
             if(s.tr){var up=s.tr>0;ctx.fillStyle=up?'#f87171':'#4ade80';ctx.beginPath();if(up){ctx.moveTo(xt+13.5,y-6);ctx.lineTo(xt+24,y);ctx.lineTo(xt+13.5,y+6);}else{ctx.moveTo(xt-13.5,y-6);ctx.lineTo(xt-24,y);ctx.lineTo(xt-13.5,y+6);}ctx.closePath();ctx.fill();ctx.strokeStyle='rgba(255,255,255,.9)';ctx.lineWidth=1;ctx.stroke();}}
@@ -732,7 +1239,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       var _rawMax=0; SF.forEach(function(s){ if(s.cur>_rawMax)_rawMax=s.cur; if(s.ttm!=null&&s.ttm>_rawMax)_rawMax=s.ttm; });
       function _niceStep(x){var e=Math.pow(10,Math.floor(Math.log(Math.max(1,x))/Math.LN10)),f=x/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e;}
       var _sStep=_niceStep(Math.max(1,_rawMax)/5), _smax=Math.max(_sStep,Math.ceil(_rawMax/_sStep)*_sStep);
-      makeChart('subcat',{type:'bar',plugins:[diaArrow,groupLabels],data:{labels:SF.map(function(s){return s.l2;}),datasets:[{data:SF.map(function(s){return s.cur;}),backgroundColor:SF.map(function(s){return s.col;}),borderRadius:3,barPercentage:.78,xAxisID:'x'}]},options:{indexAxis:'y',maintainAspectRatio:false,barLabelMax:0,layout:{padding:{left:40,right:52}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){var s=SF[c.dataIndex];return s.cat+' · this month '+gbp(s.cur)+' · 12-mo avg '+gbp(s.ttm);}}}},scales:{x:{position:'bottom',min:0,max:_smax,grid:{color:CC.grid},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},x2:{position:'top',min:0,max:_smax,grid:{display:false},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},y:{grid:{display:false},ticks:{color:'#d8d8e2',font:{size:12}}}}}});
+      makeChart('subcat',{type:'bar',plugins:[diaArrow,groupLabels],data:{labels:SF.map(function(s){return s.l2;}),datasets:[{data:SF.map(function(s){return s.cur;}),backgroundColor:SF.map(function(s){return s.col;}),borderRadius:3,barPercentage:.78,xAxisID:'x'}]},options:{indexAxis:'y',maintainAspectRatio:false,barLabelMax:0,layout:{padding:{left:40,right:52}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){var s=SF[c.dataIndex];return L('tip.subcat',{cat:s.cat,cur:gbp(s.cur),ttm:gbp(s.ttm)});}}}},scales:{x:{position:'bottom',min:0,max:_smax,grid:{color:CC.grid},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},x2:{position:'top',min:0,max:_smax,grid:{display:false},ticks:{stepSize:_sStep,color:'#9a9aa8',font:{size:12},callback:unitTick}},y:{grid:{display:false},ticks:{color:'#d8d8e2',font:{size:12}}}}}});
     }
     // per-category small multiples: monthly actual bars + 3-mo MA line
     var SM=window.__sm, sg=document.getElementById('smgrid');
@@ -753,9 +1260,14 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var DB=wb.Sheets['Dashboard'];
     var sec=readAccounts(AC);
     var networth=findByLabel(AC,'net worth','D'),gross=findByLabel(AC,'gross assets','D'),liab=findByLabel(AC,'total liabilities','D'),liquid=findByLabel(AC,'total liquid','D'),inv=findByLabel(AC,'total investments','D');
-    if(networth==null&&sec.INVESTMENTS.length===0){alert('This workbook has no saved values yet — open it in Excel, press Save once, then Load again.');return;}
+    if(networth==null&&sec.INVESTMENTS.length===0){alert(L('err.noValues'));return;}
     _cfgCache=null;   // re-read Config on every load, incl. after switching workbook
-    var CFG=readConfig(wb); setLocaleFrom(CFG);
+    var CFG=readConfig(wb);
+    /* Config!SETTINGS "Language" is the workbook's default. The user's own pick in the
+       header wins over it, which is why it only applies when nothing explicit is stored. */
+    try{ if(window.I18N&&CFG.set.language&&I18N.has(CFG.set.language)&&!I18N.isExplicit()&&CFG.set.language!==I18N.get()){
+      I18N.set(CFG.set.language,false); if(window.__applyStatic)window.__applyStatic(); } }catch(e){}
+    setLocaleFrom(CFG); refreshMonthNames();
     var cash=sumA(sec.CASH),sav=sumA(sec.SAVINGS),ref=sumA(sec['REFUNDS DUE']);
     // Net liquid assets deduct only SHORT-TERM liabilities. Accounts column E holds a DUE DATE:
     // due within 12 months = short-term (deducted); a far-off or blank date = long-term (excluded, e.g. mortgage).
@@ -772,34 +1284,34 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     // "Where the wealth sits" composition — from Config WEALTH GROUPS, else generic keyword defaults. Fully data-driven, no personal keys in code.
     (function(){
       var groups=CFG.groups.length?CFG.groups:[
-        {match:['company','stake','shareholding','equity'],label:'Company stake',color:'#a78bfa'},
-        {match:['pension','sipp','retire','annuity'],label:'Pension',color:'#f59e0b'},
-        {match:['home','property'],label:'Home',color:'#5b9cf6'}];
+        {match:['company','stake','shareholding','equity'],label:L('wealth.company'),color:'#a78bfa'},
+        {match:['pension','sipp','retire','annuity'],label:L('wealth.pension'),color:'#f59e0b'},
+        {match:['home','property'],label:L('wealth.home'),color:'#5b9cf6'}];
       var inv=sec.INVESTMENTS.slice(), used={}, comp=[];
       groups.forEach(function(g){var sum=0; inv.forEach(function(x,xi){var ln=(x[0]||'').toLowerCase(); if(!used[xi]&&g.match.some(function(kw){return kw&&ln.indexOf(kw)>=0;})){sum+=x[1];used[xi]=1;}}); if(sum>0)comp.push([g.label,g.color||'#8a8a9a',sum]);});
       var other=0; inv.forEach(function(x,xi){if(!used[xi])other+=x[1];});
-      if(other>0)comp.push(['Other investments','#2dd4bf',other]);
-      var liq=(cash+sav); if(liq>0)comp.push(['Liquid','#4ade80',liq]);
+      if(other>0)comp.push([L('wealth.other'),'#2dd4bf',other]);
+      var liq=(cash+sav); if(liq>0)comp.push([L('wealth.liquid'),'#4ade80',liq]);
       STATE.wealthComp=comp;
       var largest=null; inv.forEach(function(x){if(!largest||x[1]>largest[1])largest=x;}); STATE.largestHolding=largest;
     })();
     // balance sheet
     var bs=document.getElementById('bsWrap');
     if(bs){var rows=function(arr){return arr.map(function(x){return '<div class="bs-row"><span>'+x[0]+'</span><span>'+gbp(x[1])+'</span></div>';}).join('');};
-      bs.innerHTML='<div class="bs-title">Balance Sheet &mdash; live</div><div class="bs-h">ASSETS</div>'+
-        '<div class="bs-grp">Cash &amp; bank</div>'+rows(sec.CASH)+
-        '<div class="bs-grp">Savings</div>'+rows(sec.SAVINGS)+
-        '<div class="bs-grp">Refunds due</div>'+rows(sec['REFUNDS DUE'])+
-        '<div class="bs-sub"><span>Current assets</span><span>'+gbp(liquid)+'</span></div>'+
-        '<div class="bs-grp">Investments &amp; long-term</div>'+rows(sec.INVESTMENTS)+
-        '<div class="bs-sub"><span>Investments</span><span>'+gbp(inv)+'</span></div>'+
-        '<div class="bs-tot"><span>Total assets</span><span>'+gbp(gross)+'</span></div>'+
-        '<div class="bs-h">LIABILITIES</div>'+
-        sec.LIABILITIES.map(function(x){var s=liabShortTerm(x),dd=liabDueDate(x);var dstr=dd?" &middot; "+dd.toLocaleDateString(LOC,{month:'short',year:'2-digit'}):'';var fl='<span style="color:'+(s?'#5b9cf6':'#f59e0b')+';font-size:12px;font-weight:700;margin-left:6px">'+(s?'ST':'LT')+dstr+'</span>';return '<div class="bs-row"><span>'+x[0]+fl+'</span><span>'+gbp(x[1])+'</span></div>';}).join('')+
-        '<div class="bs-sub"><span>Short-term liabilities</span><span>('+gbp(stLiab)+')</span></div>'+
-        '<div class="bs-sub"><span>Long-term liabilities</span><span>('+gbp(ltLiab)+')</span></div>'+
-        '<div class="bs-tot"><span>Total liabilities</span><span>('+gbp(liab)+')</span></div>'+
-        '<div class="bs-nw"><span>NET WORTH</span><span>'+gbp(networth)+'</span></div>';}
+      bs.innerHTML='<div class="bs-title" data-help="balancesheet">'+L('bs.titleLive')+'</div><div class="bs-h">'+L('bs.assets')+'</div>'+
+        '<div class="bs-grp">'+L('bs.cashBank')+'</div>'+rows(sec.CASH)+
+        '<div class="bs-grp">'+L('bs.savings')+'</div>'+rows(sec.SAVINGS)+
+        '<div class="bs-grp">'+L('bs.refunds')+'</div>'+rows(sec['REFUNDS DUE'])+
+        '<div class="bs-sub"><span>'+L('bs.currentAssets')+'</span><span>'+gbp(liquid)+'</span></div>'+
+        '<div class="bs-grp">'+L('bs.investLT')+'</div>'+rows(sec.INVESTMENTS)+
+        '<div class="bs-sub"><span>'+L('bs.investments')+'</span><span>'+gbp(inv)+'</span></div>'+
+        '<div class="bs-tot"><span>'+L('bs.totalAssets')+'</span><span>'+gbp(gross)+'</span></div>'+
+        '<div class="bs-h">'+L('bs.liabilities')+'</div>'+
+        sec.LIABILITIES.map(function(x){var s=liabShortTerm(x),dd=liabDueDate(x);var dstr=dd?" &middot; "+dd.toLocaleDateString(LOC,{month:'short',year:'2-digit'}):'';var fl='<span style="color:'+(s?'#5b9cf6':'#f59e0b')+';font-size:12px;font-weight:700;margin-left:6px">'+L(s?'bs.st':'bs.lt')+dstr+'</span>';return '<div class="bs-row"><span>'+x[0]+fl+'</span><span>'+gbp(x[1])+'</span></div>';}).join('')+
+        '<div class="bs-sub"><span>'+L('bs.stLiab')+'</span><span>('+gbp(stLiab)+')</span></div>'+
+        '<div class="bs-sub"><span>'+L('bs.ltLiab')+'</span><span>('+gbp(ltLiab)+')</span></div>'+
+        '<div class="bs-tot"><span>'+L('bs.totalLiab')+'</span><span>('+gbp(liab)+')</span></div>'+
+        '<div class="bs-nw"><span>'+L('bs.netWorth')+'</span><span>'+gbp(networth)+'</span></div>';}
     var LL=sec.LIABILITIES.map(function(x){return x[0];}),LV=sec.LIABILITIES.map(function(x){return x[1];});
     /* One liability usually dwarfs the rest (a mortgage, a big loan) and flattens
        the chart. Split the largest onto its own upper axis when it is more than
@@ -808,8 +1320,8 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var mi=(_ord.length>1&&_ord[0][0]>3*_ord[1][0])?_ord[0][1]:-1;
     var _bigName=mi>=0?LL[mi]:'';
     makeChart('liabMix',{type:'bar',data:{labels:LL,datasets:[
-        {label:'Other liabilities (lower axis)',data:LV.map(function(v,i){return i===mi?null:v;}),backgroundColor:CC.red,borderRadius:3,xAxisID:'x'},
-        {label:_bigName+' (upper axis)',data:LV.map(function(v,i){return i===mi?v:null;}),backgroundColor:CC.amber,borderRadius:3,xAxisID:'x2'}]},
+        {label:L('chart.otherLiab'),data:LV.map(function(v,i){return i===mi?null:v;}),backgroundColor:CC.red,borderRadius:3,xAxisID:'x'},
+        {label:L('chart.upperAxis',{name:_bigName}),data:LV.map(function(v,i){return i===mi?v:null;}),backgroundColor:CC.amber,borderRadius:3,xAxisID:'x2'}]},
       options:{maintainAspectRatio:false,indexAxis:'y',layout:{padding:{right:52}},
         plugins:{legend:{display:true,labels:{boxWidth:9,font:{size:12},color:'#999'}},tooltip:{callbacks:{label:function(c){return c.dataset.label.split(' (')[0]+': '+gbp(c.raw);}}}},
         scales:{x:{position:'bottom',grid:{color:CC.grid},ticks:{color:CC.red,font:{size:12},callback:kTick}},
@@ -825,19 +1337,19 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       return _cardKw.some(function(kw){return kw&&l.indexOf(kw)>=0;});}).reduce(function(t,b){return t+b.amt;},0);
     var tb=document.getElementById('billsDueBody');
     if(tb){var today=new Date(); var td=today.getDate();
-      var mons=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      var mons=MONS3;
       var sorted=bills.slice().sort(function(a,b){return a.day-b.day;});
       var leftTot=0,paidTot=0;
       var body=sorted.map(function(b){
         var paid=(b.day<td); if(paid){paidTot+=b.amt;}else{leftTot+=b.amt;}
         var du=b.day-td;
-        var when=paid?'<span style="color:#4ade80">Paid &#10003;</span>'
-          :String(b.day).padStart(2,'0')+' '+mons[today.getMonth()]+((du>=0&&du<=4)?' &middot; '+du+'d':'');
+        var when=paid?'<span style="color:#4ade80">'+L('bills.paid')+'</span>'
+          :String(b.day).padStart(2,'0')+' '+mons[today.getMonth()]+((du>=0&&du<=4)?' &middot; '+du+L('u.d'):'');
         return '<tr style="'+(paid?'opacity:0.45;':'')+'"><td class="name">'+b.n+'</td><td class="num">'+gbp(b.amt)+'</td><td class="num">'+b.day+'</td><td class="num" style="color:'+(paid?'#4ade80':(du<=4?'#f87171':'#888'))+'">'+when+'</td></tr>';}).join('');
       tb.innerHTML=body
-        +'<tr style="border-top:1px solid #2a2a3a"><td class="name" style="color:#fbbf24;font-weight:600">Left to pay this month</td><td class="num" style="color:#fbbf24;font-weight:600">'+gbp(leftTot)+'</td><td class="num"></td><td class="num" style="color:#666">'+gbp(paidTot)+' paid</td></tr>'
-        +'<tr><td class="name" style="color:#888">Total monthly</td><td class="num" style="color:#a78bfa">'+gbp(billTot)+'</td><td class="num"></td><td class="num"></td></tr>';
-      var blh=document.getElementById('billsLeftHdr'); if(blh) blh.innerHTML=gbp(leftTot)+' left';}
+        +'<tr style="border-top:1px solid #2a2a3a"><td class="name" style="color:#fbbf24;font-weight:600">'+L('bills.left')+'</td><td class="num" style="color:#fbbf24;font-weight:600">'+gbp(leftTot)+'</td><td class="num"></td><td class="num" style="color:#666">'+L('bills.paidAmt',{x:gbp(paidTot)})+'</td></tr>'
+        +'<tr><td class="name" style="color:#888">'+L('bills.totalMonthly')+'</td><td class="num" style="color:#a78bfa">'+gbp(billTot)+'</td><td class="num"></td><td class="num"></td></tr>';
+      var blh=document.getElementById('billsLeftHdr'); if(blh) blh.innerHTML=L('bills.leftHdr',{x:gbp(leftTot)});}
     // cash reserve + long-run history
     var hist=null;
     try{ hist=readHistorical(wb.Sheets['Historical']); }catch(e){ console.warn('historical read failed',e); }
@@ -848,9 +1360,10 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var _own=document.getElementById('ownerName');
     if(_own) _own.textContent=CFG.set.owner?(CFG.set.owner+' · '):'';
     var da=document.getElementById('dataAsOf');
-    if(da){da.textContent='loaded '+new Date().toLocaleString(LOC,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});da.style.color='#4ade80';}
+    if(da){da.textContent=L('hdr.loadedAt',{x:new Date().toLocaleString(LOC,{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})});da.style.color='#4ade80';}
     var eb=document.getElementById('emptyBanner'); if(eb) eb.style.display='none';
-    var st=document.getElementById('loadWb'); if(st){st.textContent='Reload workbook'; st.style.color='#4ade80'; st.style.borderColor='#4ade80';}
+    window.__wbLoaded=true;
+    var st=document.getElementById('loadWb'); if(st){st.textContent=L('hdr.reload'); st.style.color='#4ade80'; st.style.borderColor='#4ade80';}
     window.__hist=hist; try{renderOverview(wb,hist);}catch(e){console.warn('overview failed',e);}
     try{ var _an=document.getElementById('analyst'); if(_an&&_an.style.display!=='none') renderAnalyst(); }catch(e){console.warn('analyst failed',e);}
     try{ if(window.__pvRewrap) window.__pvRewrap(); }catch(e){}
@@ -865,9 +1378,9 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     for(var r=startR;r<=rng.e.r+1;r++){var id=v('A'+r); if(!id)continue;
       items.push({id:id,item:v('B'+r),cat:v('C'+r),cost:v('D'+r),verdict:v('T'+r)});}
     var cls=function(x){x=(x||'').toString();return x.indexOf('OK')===0?'#4ade80':x.indexOf('Hold')===0?'#5b9cf6':'#fbbf24';};
-    var head='<div style="font-size:12px;color:#888;margin-bottom:8px;">Net liquidity '+gbp(netliq)+' &minus; provisions '+gbp(prov)+' = <b style="color:#4ade80">free cash '+gbp(free)+'</b> &middot; gate '+Math.round((ratio||0)*100)+'% &rarr; max single '+gbp((free||0)*(ratio||0))+'</div>';
+    var head='<div style="font-size:12px;color:#888;margin-bottom:8px;">'+L('wish.head',{a:gbp(netliq),b:gbp(prov),c:gbp(free),g:Math.round((ratio||0)*100),m:gbp((free||0)*(ratio||0))})+'</div>';
     var rows=items.map(function(i){return '<tr><td class="name">'+(i.item||'')+'</td><td>'+(i.cat||'')+'</td><td class="num">'+gbp(i.cost)+'</td><td style="color:'+cls(i.verdict)+';font-weight:600;white-space:nowrap">'+(i.verdict||'')+'</td></tr>';}).join('');
-    box.innerHTML=head+'<table><thead><tr><th>Item</th><th>Category</th><th>Cost</th><th>Verdict</th></tr></thead><tbody>'+rows+'</tbody></table>';
+    box.innerHTML=head+'<table><thead><tr><th>'+L('wish.item')+'</th><th>'+L('wish.category')+'</th><th>'+L('wish.cost')+'</th><th>'+L('wish.verdict')+'</th></tr></thead><tbody>'+rows+'</tbody></table>';
   }
 
   function updateSpending(wb,bills,billTot){ var TH=readConfig(wb).set;
@@ -929,7 +1442,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var catMon={}; CATS.forEach(function(c){catMon[c]=csmT.map(function(){return 0;});});
     tx.forEach(function(t){ if(t.bk!=='Recurring'||!t.l1||csmIdx[t.m]==null)return;
       if(CATS.indexOf(t.l1)>=0) catMon[t.l1][csmIdx[t.m]]+=t.amt; });
-    var monLbl0=function(ym){var p=String(ym).split('-');return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][(+p[1]||1)-1]+" '"+p[0].slice(2);};
+    var monLbl0=function(ym){var p=String(ym).split('-');return MONS3[(+p[1]||1)-1]+" '"+p[0].slice(2);};
     window.__cat={catMon:catMon,labels:csmT.map(monLbl0),monthsYM:csmT,curM:curM,cats:CATS,col:CATCOL,hasData:hasData};
     // per-category actual + 3-month moving average, over the configured history window
     var csm=months.filter(function(m){return !_from||m>=_from;});
@@ -944,7 +1457,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     // stash subcategory data (this-month value, trailing-12mo avg, trend) for the single combined Analyst chart; excludes mortgage/transfers
     (function(){
       var EXCLS={Transfer:1,Income:1,Savings:1,REVIEW:1}, perMon={};
-      tx.forEach(function(t){ if(!t.l1||EXCLS[t.l1]||t.bk!=='Recurring')return; var l2=t.l2||'(uncategorised)';
+      tx.forEach(function(t){ if(!t.l1||EXCLS[t.l1]||t.bk!=='Recurring')return; var l2=t.l2||L('misc.uncat');
         (perMon[t.l1]=perMon[t.l1]||{}); (perMon[t.l1][l2]=perMon[t.l1][l2]||{}); perMon[t.l1][l2][t.m]=(perMon[t.l1][l2][t.m]||0)+t.amt; });
       var compM=months.filter(function(m){return m<curM;}), wA=compM.slice(-12), wB=compM.slice(-13,-1);
       function avgOver(l1,l2,win){var s=0;win.forEach(function(m){s+=(perMon[l1]&&perMon[l1][l2]&&perMon[l1][l2][m])||0;});return s/12;}
@@ -999,12 +1512,15 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
   }
 
 
+  /* Language switch: re-run the whole render so chart labels, tooltips and axis
+     formatters are rebuilt in the new language. Cheap — everything is already in memory. */
+  window.__i18nRerender=function(){ if(!_wb)return; try{ setLocaleFrom(readConfig(_wb)); refreshMonthNames(); update(_wb); }catch(e){ console.warn('relang failed',e); } };
   var fi=document.getElementById('wbFile');
   document.getElementById('loadWb').onclick=function(){fi.click();};
   fi.onchange=function(e){var f=e.target.files[0];if(!f)return;var rd=new FileReader();
     rd.onload=function(ev){try{var wb=XLSX.read(new Uint8Array(ev.target.result),{type:'array',cellDates:true});update(wb);
       setTimeout(function(){window.dispatchEvent(new Event('resize'));},80);
-    }catch(err){alert('Could not read that file: '+err.message);}};
+    }catch(err){alert(L('err.read')+err.message);}};
     rd.readAsArrayBuffer(f);};
   // month selector: re-render the Spending views (Budget vs Actual + Expenses by Subcategory) for the chosen month
   (function(){var sel=document.getElementById('monthSel'),prev=document.getElementById('mPrev'),next=document.getElementById('mNext');
@@ -1023,40 +1539,61 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
 <script>
 /* ---- Help (?) badges: hover/click for a plain-language explanation of each panel ---- */
 (function(){
-  var H=[
-    ['net liquidity','Spendable cash after short-term debts, and progress toward your rebuild goal. At the shown monthly pace you reach the goal in the stated number of months.'],
-    ['cash-flow forecast','Projects your day-by-day balance for 12 months: opens from net liquid assets, adds net salary on payday, subtracts every dated direct-debit bill on its due day. The low point is what matters.'],
-    ['spending by category','Monthly recurring spend per category over the last 24 months ending at the selected month — one line per category. Toggle raw vs 3-month average; the y-axis and zero line stay fixed. Excludes one-off/capital, transfers, savings.'],
-    ['where the wealth sits','Your net worth split by where it is held — shows why liquid runway can be tight even when net worth is high.'],
-    ["where it's going",'This month’s actual spend per category vs budget. The % is spend against the day-proportional allowance (how far through the month you are). Click a row for the transactions.'],
-    ['month-end cash balance','Your running month-end cash position over time, from the Historical sheet.'],
-    ['savings rate','Net savings and investments each month as a percentage of your salary.'],
-    ['net savings','Money moved into savings and investments each month (contributions, not balances).'],
-    ['trailing-12-month average','Bars = this month’s spend per subcategory. The diamond marks the trailing-12-month average per month; the arrow shows whether that average rose (red) or fell (green) at the last month-close. Shared scale, mortgage excluded.'],
-    ['per category','Each category’s monthly recurring spend (bars) with its 3-month moving average (line).'],
-    ['balance sheet','A full snapshot of assets minus liabilities that sums to your net worth, driven by the Accounts sheet.'],
-    ['bills due','Your direct-debit bills with their collection days — what is still to leave the account this month.'],
-    ['where money is owed','Your liabilities ranked by size (mortgage on the upper axis, everything else on the lower).'],
-    ['affordability','Items you’re considering, gated by an affordability rule based on free cash after provisions.']
-  ];
+  /* Keyed off data-help, not the visible text — the text is translated, the key is not. */
   function place(b){var tip=b.querySelector('.tip');if(!tip)return;var r=b.getBoundingClientRect();var tw=240,th=tip.offsetHeight||90;var left=Math.min(window.innerWidth-tw-8,Math.max(8,r.left+r.width/2-tw/2));var top=(r.top>th+14)?(r.top-th-8):(r.bottom+8);tip.style.left=left+'px';tip.style.top=top+'px';}
   function inject(){
-    document.querySelectorAll('.ctitle, .sec-h, .bs-title, details.detail>summary').forEach(function(t){
-      if(t.querySelector('.help'))return; var txt=(t.textContent||'').toLowerCase();
-      for(var i=0;i<H.length;i++){ if(txt.indexOf(H[i][0])>=0){
-        var b=document.createElement('span'); b.className='help'; b.textContent='?';
-        var tip=document.createElement('span'); tip.className='tip'; tip.textContent=H[i][1];
-        b.appendChild(tip); t.appendChild(b);
-        b.addEventListener('mouseenter',function(){place(this);});
-        b.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();var open=this.classList.contains('open');document.querySelectorAll('.help.open').forEach(function(x){x.classList.remove('open');});if(!open){this.classList.add('open');place(this);}});
-        break;
-      }}
+    document.querySelectorAll('[data-help]').forEach(function(t){
+      if(t.querySelector('.help'))return;
+      var key='help.'+t.getAttribute('data-help');
+      var txt=window.I18N?I18N.t(key):''; if(!txt||txt===key)return;
+      var b=document.createElement('span'); b.className='help'; b.textContent='?';
+      var tip=document.createElement('span'); tip.className='tip'; tip.textContent=txt;
+      b.appendChild(tip); t.appendChild(b);
+      b.addEventListener('mouseenter',function(){place(this);});
+      b.addEventListener('click',function(e){e.stopPropagation();e.preventDefault();var open=this.classList.contains('open');document.querySelectorAll('.help.open').forEach(function(x){x.classList.remove('open');});if(!open){this.classList.add('open');place(this);}});
     });
   }
+  window.__helpRefresh=inject;
   if(document.readyState!=='loading')inject(); else document.addEventListener('DOMContentLoaded',inject);
   var deb; var mo=new MutationObserver(function(){clearTimeout(deb);deb=setTimeout(inject,180);});
   try{mo.observe(document.body,{childList:true,subtree:true});}catch(e){}
   document.addEventListener('click',function(){document.querySelectorAll('.help.open').forEach(function(x){x.classList.remove('open');});});
+})();
+</script>
+
+<script>
+/* ---- Applies the active language to the static DOM and drives the header picker ---- */
+(function(){
+  function applyStatic(){
+    var t=I18N.t, load=I18N.t('hdr.load');
+    document.querySelectorAll('[data-i18n]').forEach(function(e){ e.textContent=t(e.getAttribute('data-i18n')); });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(e){ e.innerHTML=t(e.getAttribute('data-i18n-html'),{load:load}); });
+    document.querySelectorAll('[data-i18n-title]').forEach(function(e){ e.setAttribute('title',t(e.getAttribute('data-i18n-title'))); });
+    /* the Load button doubles as the Reload button once a workbook is in memory */
+    var lw=document.getElementById('loadWb'); if(lw&&window.__wbLoaded) lw.textContent=t('hdr.reload');
+    /* keep the picker in step when the language was changed by something other than the
+       picker itself — e.g. Config!SETTINGS "Language" applied on workbook load */
+    var ls=document.getElementById('langSel'); if(ls&&ls.value!==I18N.get()) ls.value=I18N.get();
+    try{ document.documentElement.setAttribute('lang',I18N.get()); }catch(e){}
+    try{ document.title=t('app.title'); }catch(e){}
+    try{ if(window.__pvRelabel) window.__pvRelabel(); }catch(e){}
+    try{ if(window.__helpRefresh) window.__helpRefresh(); }catch(e){}
+  }
+  window.__applyStatic=applyStatic;
+  function init(){
+    var sel=document.getElementById('langSel');
+    if(sel){
+      sel.innerHTML=I18N.langs.map(function(l){return '<option value="'+l[0]+'">'+l[1]+'</option>';}).join('');
+      sel.value=I18N.get();
+      sel.addEventListener('change',function(){
+        if(!I18N.set(this.value,true))return;          /* true = remember: the user's pick beats Config and the browser */
+        applyStatic();
+        try{ if(window.__i18nRerender) window.__i18nRerender(); }catch(e){}
+      });
+    }
+    applyStatic();
+  }
+  if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',init); } else { init(); }
 })();
 </script>
 
