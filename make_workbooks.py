@@ -215,13 +215,18 @@ def build(blank):
     ws.title = "Dashboard"
     ws["A1"] = f"DASHBOARD — OPTIONAL. Label in column A, value in column B. ({tag})"
     ws["A1"].font = BOLD
+    # "Target card spend per month" is the forward parameter for the 12-month cash-flow
+    # forecast: set it by hand and the forecast uses it verbatim. Leave the row out entirely
+    # and the dashboard falls back to a run-rate computed from the Transactions ledger.
     rows = ([("Net pay", 0), ("Payday", 25), ("Cash reserve goal", 0),
              ("Cash reserve monthly target", 0), ("Month opening net liquid", 0),
+             ("Target card spend per month", 0),
              ("All-in wealth rate", 0), ("Cash savings rate", 0),
              ("Footer note", "Replace with your own note, or delete this row.")]
             if blank else
             [("Net pay", 4200), ("Payday", 25), ("Cash reserve goal", 20000),
              ("Cash reserve monthly target", 800), ("Month opening net liquid", 26000),
+             ("Target card spend per month", 1600),
              ("All-in wealth rate", 0.28), ("Cash savings rate", 0.14),
              ("Footer note", "All figures in this workbook are synthetic sample data.")])
     for i, (k, v) in enumerate(rows, start=3):

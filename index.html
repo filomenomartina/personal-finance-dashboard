@@ -738,6 +738,7 @@ window.I18N=(function(){
     <summary data-i18n="det.relSummary">Version history &mdash; click to expand</summary>
     <div class="detail-body">
       <table class="dtable"><thead><tr><th style="width:90px" data-i18n="tbl.version">Version</th><th style="width:96px" data-i18n="tbl.date">Date</th><th data-i18n="tbl.changes">Changes</th></tr></thead><tbody>
+        <tr><td class="name">v1.3</td><td>Jul 2026</td><td><b>Cash-flow forecast no longer double-counts debt you have already provided for.</b> The forecast opens from net liquidity, which has already subtracted every short-term liability &mdash; but it then charged those same debts again as they fell due, once as a dated liability and once as a card-repayment bill. A one-off debt held in cash therefore pushed the curve below zero twice over. Dated liabilities are no longer re-charged when the opening balance is net liquidity (the cash+savings fallback, which deducts nothing, is unchanged). Card bills are no longer charged at all &mdash; paying a card moves money between your own cash and your own liability and leaves net liquidity untouched. What does reduce it is the spending, so the forecast now charges forward <b>card spend</b> instead, accrued smoothly day by day rather than as a month-end cliff. That figure is yours to set: a <b><code>Target card spend per month</code></b> row on the <code>Dashboard</code> sheet is used verbatim, including zero. Only when no such row exists does the forecast fall back to a run-rate averaged over the last three complete months in <code>Transactions</code>, so an unconfigured workbook still draws a curve.</td></tr>
         <tr><td class="name">v1.2</td><td>Jul 2026</td><td><b>Multilingual UI</b> — English, Italian, Spanish, French and German. The language comes from a header picker that remembers your choice; failing that from <code>Config!SETTINGS</code> &ldquo;Language&rdquo;; failing that from the browser. Number, date and month-name formatting follow the chosen language unless <code>Config</code> names an explicit <code>Locale</code>, which still wins. Category and subcategory names are never translated &mdash; they are shown exactly as typed in the workbook. Privacy-mode figure matching is now rebuilt from the active locale&rsquo;s thousands/decimal separators and unit words, so blurring still catches every figure outside English. Help badges are keyed off <code>data-help</code> instead of matching English title text. Adding a language is one entry in <code>LANGS</code> and one block in <code>DICT</code>.</td></tr>
         <tr><td class="name">v1.1</td><td>Jul 2026</td><td>Single common version for private and public use. Every owner-specific value moved out of the code and into the workbook&rsquo;s <code>Config</code> sheet: currency symbol, locale, owner name, category order, wealth groups, card-repayment accounts, history window and the alert thresholds. Removed the dead alpha-era UI that no longer had anything to draw into. Reconciled three contradictory budget-pace thresholds into one configurable pair. The liabilities chart now splits out whichever debt dominates instead of matching on the word &ldquo;mortgage&rdquo;. Same file ships here and in the public repo.</td></tr>
         <tr><td class="name">v1.0</td><td>Jul 2026</td><td>Decision-first redesign wired directly to the workbook. <b>Overview</b>: on-track verdict, safe-to-spend, hero deltas, auto-insights, net-liquidity goal, 12-month cash-flow forecast, consolidated category trend, wealth donut, click-to-drill budget. <b>Analyst</b>: month-end cash, savings rate, net savings, expenses-by-subcategory (bars + 12-mo diamonds + trend arrows), per-category small multiples, and a collapsible balance sheet / bills / affordability panel. Categories and wealth groups driven by a <code>Config</code> sheet (auto-derived when absent). Continuous monthly + quarterly axes, privacy mode, and help badges throughout.</td></tr>
@@ -1066,28 +1067,66 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
   function makeChart(id,cfg){var ex=Chart.getChart(id);if(ex)ex.destroy();var el=document.getElementById(id);if(el)return new Chart(el,cfg);}
 
 
+  /* Forward run-rate of card SPENDING, read off the Transactions ledger.
+     Paying a card bill is a swap between cash and a liability, so it does not move net liquidity
+     and must not be charged to the forecast. What does move net liquidity is the spending that put
+     the balance there — charged here as a forward estimate. Averaged over the last few COMPLETE
+     months: the newest month in the ledger is dropped, because a part-imported month would drag
+     the average down and make the forecast read optimistically. */
+  function cardSpendRunRate(wb,cardKw){
+    var SH=wb.Sheets['Transactions']; if(!SH||!window.XLSX)return null;
+    var A=XLSX.utils.sheet_to_json(SH,{header:1});
+    var EXCL={Transfer:1,Income:1,Savings:1,REVIEW:1}, per={};
+    for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue;
+      var acct=String(r[2]||'').toLowerCase();
+      if(!cardKw.some(function(k){return k&&acct.indexOf(k)>=0;}))continue;
+      if(EXCL[r[5]||''])continue;
+      var mk=String(r[1]); per[mk]=(per[mk]||0)+(+r[4]||0); }
+    var ms=Object.keys(per).sort(); if(ms.length<2)return null;
+    var complete=ms.slice(0,-1).slice(-3); if(!complete.length)return null;
+    var v=complete.reduce(function(t,mk){return t+per[mk];},0)/complete.length;
+    return (isFinite(v)&&v>0)?{amt:v,months:complete}:null; }
+
   /* Builds the 12-month daily cash-flow series consumed by the #ovFc chart on the
      Overview. Opening balance = net liquid assets; salary lands on payday (a
-     Dashboard 'Payday' cell, else the last working day); every dated bill and
-     dated liability drops out on its due day. Publishes window.__fc. */
+     Dashboard 'Payday' cell, else the last working day); every dated bill drops out
+     on its due day. Publishes window.__fc. */
   function buildForecast(wb,sec,bills,billTot,DB,cash,sav){
-    var open=(STATE.netliq!=null)?STATE.netliq:(cash+sav);   // opening = NET LIQUID ASSETS (liquid − short-term debts), live from tracker
+    /* The opening balance is NET LIQUID ASSETS — liquid less short-term debts — so every
+       short-term liability on the balance sheet has ALREADY been subtracted here. Charging one
+       again when it falls due counts the same debt twice. That is why both the dated-liability
+       drop and the card-bill payments below are suppressed whenever we open from this figure;
+       the cash+savings fallback has deducted nothing, so there the old behaviour is correct. */
+    var openedFromNetLiq=(STATE.netliq!=null);
+    var open=openedFromNetLiq?STATE.netliq:(cash+sav);
     var salary=(DB?findByLabel(DB,'net pay','B'):null)||0;
     var paydayOverride=DB?findByLabel(DB,'payday','B'):null;   // optional: a fixed day-of-month on the Dashboard sheet overrides last-working-day
+    var cardKw=STATE.cardKw||['card'];
+    function isCardBill(n){var l=String(n||'').toLowerCase();return cardKw.some(function(k){return k&&l.indexOf(k)>=0;});}
+    /* Your own number wins. A Dashboard row labelled 'Target card spend per month' (or anything
+       containing 'card spend') IS the forward parameter — set it by hand and the forecast uses it
+       verbatim, including zero. The ledger run-rate below is only a fallback for a workbook that
+       has not set one, so a fresh template still draws a curve instead of nothing. */
+    var cardTarget=null;
+    if(DB){var _t=findByLabel(DB,'target card spend','B'); if(_t==null)_t=findByLabel(DB,'card spend','B');
+      if(typeof _t==='number'&&isFinite(_t))cardTarget=_t;}
+    var _cs=(openedFromNetLiq&&cardTarget==null)?cardSpendRunRate(wb,cardKw):null;
+    var cardRun=(cardTarget!=null)?cardTarget:(_cs?_cs.amt:null);
+    var suppressCard=openedFromNetLiq&&cardRun!=null;
     var mons=MONS3;
     function daysIn(y,m){return new Date(y,m+1,0).getDate();}
     function lastWorkingDay(y,m){var d=new Date(y,m+1,0),w=d.getDay();if(w===6)d.setDate(d.getDate()-1);else if(w===0)d.setDate(d.getDate()-2);return d.getDate();}
     var today=new Date(); var start=new Date(today.getFullYear(),today.getMonth(),today.getDate());
     var HORIZON=365, labels=[], data=[], bal=open;
-    var minBal=bal, minDate=start, endBal=bal, endDate=start, monthlyNet=salary-billTot;
-    // one-off dated debts: any liability with a due date in Accounts col F, dropped in on that day
-    // Card/mortgage liability balances already have their "to pay next" portion in the Bills sheet, so a
-    // dated liability that matches a bill name is skipped here to avoid double-counting (only the un-billed
-    // remainder of a card balance would ever need its own dated entry).
+    var minBal=bal, minDate=start, endBal=bal, endDate=start;
+    var monthlyNet=salary-(suppressCard?(billTot-(STATE.cardPay||0)+cardRun):billTot);
+    // one-off dated debts: any liability with a due date in Accounts col F, dropped in on that day.
+    // Only reachable on the cash+savings fallback — when we open from net liquidity these are all
+    // inside that figure already (short-term = due within a year = inside this horizon by definition).
     var billKeys=bills.map(function(b){return b.n.toLowerCase().replace(/[^a-z0-9]/g,'');});
     function alreadyInBills(name){var n=name.toLowerCase().replace(/[^a-z0-9]/g,'');return !!n&&billKeys.some(function(k){return k&&(k.indexOf(n)>=0||n.indexOf(k)>=0);});}
     var liabDue={}, liabTot=0, liabSkipped=[], horizonEnd=start.getTime()+HORIZON*864e5;
-    (sec&&sec.LIABILITIES||[]).forEach(function(x){var dd=toDate(x[2]); if(!dd)return; var tt=dd.getTime(); if(tt<start.getTime()||tt>horizonEnd)return;
+    if(!openedFromNetLiq) (sec&&sec.LIABILITIES||[]).forEach(function(x){var dd=toDate(x[2]); if(!dd)return; var tt=dd.getTime(); if(tt<start.getTime()||tt>horizonEnd)return;
       if(alreadyInBills(x[0])){liabSkipped.push(x[0]);return;}
       var key=dd.getFullYear()+'-'+dd.getMonth()+'-'+dd.getDate(); liabDue[key]=(liabDue[key]||0)+x[1]; liabTot+=x[1];});
     for(var i=0;i<=HORIZON;i++){
@@ -1096,7 +1135,9 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       if(i>0){
         var pd=paydayOverride?Math.min(paydayOverride,dim):lastWorkingDay(y,m);
         if(dom===pd) bal+=salary;
-        bills.forEach(function(b){ if(dom===Math.min(b.day,dim)) bal-=b.amt; });
+        bills.forEach(function(b){ if(suppressCard&&isCardBill(b.n))return; if(dom===Math.min(b.day,dim)) bal-=b.amt; });
+        // card spending accrues continuously, so it drips daily rather than landing as a cliff
+        if(suppressCard) bal-=cardRun/dim;
         var lk=y+'-'+m+'-'+dom; if(liabDue[lk]) bal-=liabDue[lk];
       }
       data.push(Math.round(bal));
@@ -1333,6 +1374,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
        bills those are is a Config ACCOUNT GROUPS row ("role" = card repayment),
        not a list of bank names in the code. */
     var _cardKw=(CFG.accounts.filter(function(a){return a.role.indexOf('card')>=0;})[0]||{match:['card']}).match;
+    STATE.cardKw=_cardKw;   // the forecast needs these too, to tell a card repayment from real spending
     STATE.billTot=billTot;STATE.cardPay=bills.filter(function(b){var l=b.n.toLowerCase();
       return _cardKw.some(function(kw){return kw&&l.indexOf(kw)>=0;});}).reduce(function(t,b){return t+b.amt;},0);
     var tb=document.getElementById('billsDueBody');

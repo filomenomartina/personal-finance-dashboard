@@ -18,7 +18,7 @@ filled with synthetic data) and replace the contents.
 | `Historical` | Recommended | Month-end cash, savings rate, net savings |
 | `Expenses` | Recommended | Budget-vs-actual pacing and safe-to-spend |
 | `Bills` | Recommended | Bills due this month, the cash-flow forecast |
-| `Dashboard` | Optional | Net pay, payday, cash-reserve goal, wealth rates, footer note |
+| `Dashboard` | Optional | Net pay, payday, cash-reserve goal, target card spend, wealth rates, footer note |
 | `Daily Log` | Optional | Month-on-month deltas on the hero tiles |
 | `Wish List` | Optional | Affordability panel |
 | `Config` | Optional | Currency, locale, colours, groupings, thresholds |
@@ -90,7 +90,15 @@ cancel (`F`, `Y` or `1`).
 Label/value pairs — label in column A, value in column B. Matched by substring, so
 the exact wording is flexible: `Net pay`, `Payday`, `Month opening net liquid`,
 `Cash reserve goal`, `Cash reserve monthly target`, `Cash savings rate`,
-`All-in wealth rate`, `Footer note`.
+`All-in wealth rate`, `Target card spend per month`, `Footer note`.
+
+`Target card spend per month` is the forward parameter for the 12-month cash-flow
+forecast. Paying a credit-card bill moves money between your own cash and your own
+liability, so it leaves net liquidity unchanged and the forecast does not charge it;
+what reduces net liquidity is the spending, charged as a smooth daily accrual from
+this figure. Set it by hand — it is used verbatim, including zero. Omit the row and
+the dashboard falls back to a run-rate averaged over the last three complete months
+in `Transactions`.
 
 ## `Daily Log`
 
