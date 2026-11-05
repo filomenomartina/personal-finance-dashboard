@@ -58,8 +58,9 @@ Everything is driven by one **Overview ⇄ Analyst** toggle and a global month s
 hero; net worth, net liquid, savings rate and cash-runway tiles each with
 month-on-month deltas; auto-detected "what changed" cards; a net-liquidity rebuild
 goal; a 12-month daily cash-flow forecast that shows where the low point falls; one
-consolidated spending-by-category trend; a wealth-composition donut; and
-click-to-drill budget-vs-actual rows.
+consolidated spending-by-category trend; a wealth-composition donut;
+click-to-drill budget-vs-actual rows; and a daily stacked bar chart showing which
+days of the month the spending actually fell on.
 
 **Analyst — the detail.** Month-end cash, savings rate and net-savings history;
 expenses by subcategory (bars, a 12-month-average diamond and a trend arrow per

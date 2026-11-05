@@ -57,6 +57,10 @@ The ledger. Header in row 1, then one row per transaction:
 
 **Amount positive = money out**, negative = refund or credit.
 
+**`Date` (column A)** drives the daily stacked bar chart on the Overview. A row with
+a blank or unreadable date still counts everywhere else (those views key off `Month`),
+but it is left out of that one chart.
+
 **Bucket** is one of `Recurring`, `One-off`, `Income`, `Savings`, `REVIEW`.
 `Recurring` drives the spending views; `One-off` is excluded from them so a single
 capital outlay doesn't distort your averages; `Income` and `Savings` are flows

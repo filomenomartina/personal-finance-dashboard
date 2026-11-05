@@ -183,6 +183,12 @@ window.I18N=(function(){
     "card.wealth":"Where the wealth sits","card.wealthHelp":"Why runway is tight despite a high net worth.",
     "card.budget":"Where it's going this month — vs budget",
     "card.budgetHelp":"Bar = spent vs day-proportional allowance. Click a category to see the transactions.",
+    "card.daily":"Daily spend this month — by category",
+    "card.dailyHelp":"One bar per day, stacked by category, for the month selected above. Same categories and colours as the budget rows — these bars are those totals spread over the days they happened on.",
+    "daily.allowance":"daily allowance {x}",
+    "tip.dailyTotal":"Total {x}",
+    "tip.dailyDay":"Day {d}",
+    "help.daily":"Every day of the selected month as one stacked bar, split by category, so you can see when the money actually went out rather than only how much. The dashed line is the month's budget spread evenly across the days — bars above it are days that ran ahead of pace. Recurring spend only, matching the budget rows above; transfers, income, savings and one-off capital are excluded.",
     "card.cashbal":"Month-end cash balance","card.cashbalHelp":"From the Historical sheet.",
     "card.savrate":"Savings rate (% of salary) — monthly",
     "card.netsav":"Net savings & investments — per month","card.netsavHelp":"Contributions, not balances.",
@@ -269,6 +275,12 @@ window.I18N=(function(){
     "card.wealth":"Dove si trova il patrimonio","card.wealthHelp":"Perché l'autonomia è limitata nonostante un patrimonio netto elevato.",
     "card.budget":"Dove stanno andando i soldi questo mese — vs budget",
     "card.budgetHelp":"Barra = speso vs quota proporzionale ai giorni trascorsi. Clicca una categoria per vedere le transazioni.",
+    "card.daily":"Spesa giornaliera questo mese — per categoria",
+    "card.dailyHelp":"Una barra per giorno, divisa per categoria, per il mese selezionato sopra. Stesse categorie e stessi colori delle righe di budget — queste barre sono quei totali distribuiti sui giorni in cui sono avvenuti.",
+    "daily.allowance":"quota giornaliera {x}",
+    "tip.dailyTotal":"Totale {x}",
+    "tip.dailyDay":"Giorno {d}",
+    "help.daily":"Ogni giorno del mese selezionato come una barra divisa per categoria, per vedere quando i soldi sono effettivamente usciti e non solo quanti. La linea tratteggiata è il budget del mese distribuito equamente sui giorni — le barre sopra di essa sono giorni andati oltre il ritmo previsto. Solo spesa ricorrente, come nelle righe di budget sopra; trasferimenti, entrate, risparmi e spese una tantum sono esclusi.",
     "card.cashbal":"Saldo di cassa a fine mese","card.cashbalHelp":"Dal foglio Historical.",
     "card.savrate":"Tasso di risparmio (% dello stipendio) — mensile",
     "card.netsav":"Risparmi e investimenti netti — per mese","card.netsavHelp":"Versamenti, non saldi.",
@@ -355,6 +367,12 @@ window.I18N=(function(){
     "card.wealth":"Dónde está el patrimonio","card.wealthHelp":"Por qué la autonomía es ajustada pese a un patrimonio neto alto.",
     "card.budget":"A dónde va el dinero este mes — vs presupuesto",
     "card.budgetHelp":"Barra = gastado vs asignación proporcional a los días. Haz clic en una categoría para ver las transacciones.",
+    "card.daily":"Gasto diario este mes — por categoría",
+    "card.dailyHelp":"Una barra por día, apilada por categoría, para el mes seleccionado arriba. Las mismas categorías y colores que las filas de presupuesto — estas barras son esos totales repartidos por los días en que ocurrieron.",
+    "daily.allowance":"asignación diaria {x}",
+    "tip.dailyTotal":"Total {x}",
+    "tip.dailyDay":"Día {d}",
+    "help.daily":"Cada día del mes seleccionado como una barra apilada, dividida por categoría, para ver cuándo salió realmente el dinero y no solo cuánto. La línea discontinua es el presupuesto del mes repartido por igual entre los días — las barras por encima son días que fueron por delante del ritmo. Solo gasto recurrente, igual que las filas de presupuesto de arriba; traspasos, ingresos, ahorro y gastos puntuales quedan excluidos.",
     "card.cashbal":"Saldo de caja a fin de mes","card.cashbalHelp":"De la hoja Historical.",
     "card.savrate":"Tasa de ahorro (% del salario) — mensual",
     "card.netsav":"Ahorro e inversión netos — por mes","card.netsavHelp":"Aportaciones, no saldos.",
@@ -441,6 +459,12 @@ window.I18N=(function(){
     "card.wealth":"Où se trouve le patrimoine","card.wealthHelp":"Pourquoi l'autonomie est courte malgré un patrimoine net élevé.",
     "card.budget":"Où va l'argent ce mois-ci — vs budget",
     "card.budgetHelp":"Barre = dépensé vs enveloppe proportionnelle aux jours écoulés. Cliquez sur une catégorie pour voir les transactions.",
+    "card.daily":"Dépenses quotidiennes ce mois-ci — par catégorie",
+    "card.dailyHelp":"Une barre par jour, empilée par catégorie, pour le mois sélectionné ci-dessus. Mêmes catégories et mêmes couleurs que les lignes de budget — ces barres sont ces totaux répartis sur les jours où ils ont eu lieu.",
+    "daily.allowance":"enveloppe quotidienne {x}",
+    "tip.dailyTotal":"Total {x}",
+    "tip.dailyDay":"Jour {d}",
+    "help.daily":"Chaque jour du mois sélectionné sous forme de barre empilée, ventilée par catégorie, pour voir quand l'argent est réellement sorti et pas seulement combien. La ligne pointillée est le budget du mois réparti également sur les jours — les barres au-dessus sont les jours en avance sur le rythme. Dépenses récurrentes uniquement, comme les lignes de budget ci-dessus ; virements, revenus, épargne et dépenses exceptionnelles sont exclus.",
     "card.cashbal":"Solde de trésorerie en fin de mois","card.cashbalHelp":"D'après la feuille Historical.",
     "card.savrate":"Taux d'épargne (% du salaire) — mensuel",
     "card.netsav":"Épargne et investissements nets — par mois","card.netsavHelp":"Versements, pas soldes.",
@@ -527,6 +551,12 @@ window.I18N=(function(){
     "card.wealth":"Wo das Vermögen steckt","card.wealthHelp":"Warum die Reichweite knapp ist trotz hohem Nettovermögen.",
     "card.budget":"Wohin das Geld diesen Monat fließt — vs Budget",
     "card.budgetHelp":"Balken = ausgegeben vs tagesanteiliges Budget. Klicke eine Kategorie an, um die Buchungen zu sehen.",
+    "card.daily":"Tägliche Ausgaben diesen Monat — nach Kategorie",
+    "card.dailyHelp":"Ein Balken pro Tag, gestapelt nach Kategorie, für den oben gewählten Monat. Gleiche Kategorien und Farben wie die Budgetzeilen — diese Balken sind dieselben Summen, verteilt auf die Tage, an denen sie anfielen.",
+    "daily.allowance":"Tagesbudget {x}",
+    "tip.dailyTotal":"Gesamt {x}",
+    "tip.dailyDay":"Tag {d}",
+    "help.daily":"Jeder Tag des gewählten Monats als gestapelter Balken, aufgeteilt nach Kategorie — so siehst du, wann das Geld tatsächlich abgeflossen ist und nicht nur wie viel. Die gestrichelte Linie ist das Monatsbudget gleichmäßig auf die Tage verteilt; Balken darüber sind Tage über dem Plan. Nur wiederkehrende Ausgaben, passend zu den Budgetzeilen oben; Umbuchungen, Einnahmen, Sparen und Einmalausgaben sind ausgenommen.",
     "card.cashbal":"Kassenbestand zum Monatsende","card.cashbalHelp":"Aus dem Blatt Historical.",
     "card.savrate":"Sparquote (% des Gehalts) — monatlich",
     "card.netsav":"Netto-Sparen und -Investitionen — pro Monat","card.netsavHelp":"Einzahlungen, keine Bestände.",
@@ -694,6 +724,11 @@ window.I18N=(function(){
       <div id="ovBudget"></div>
       <div class="drill" id="ovDrill" style="display:none"><h4 id="ovDrillTitle"></h4><div id="ovDrillList"></div></div>
     </div>
+    <div class="card" id="ovDailyCard">
+      <div class="ctitle" data-i18n="card.daily" data-help="daily">Daily spend this month &mdash; by category</div>
+      <div class="chelp" data-i18n="card.dailyHelp">One bar per day, stacked by category, for the month selected above.</div>
+      <div class="chartbox" style="height:260px"><canvas id="ovDaily"></canvas></div>
+    </div>
   </div>
 
   <div id="analyst" style="display:none">
@@ -738,6 +773,7 @@ window.I18N=(function(){
     <summary data-i18n="det.relSummary">Version history &mdash; click to expand</summary>
     <div class="detail-body">
       <table class="dtable"><thead><tr><th style="width:90px" data-i18n="tbl.version">Version</th><th style="width:96px" data-i18n="tbl.date">Date</th><th data-i18n="tbl.changes">Changes</th></tr></thead><tbody>
+        <tr><td class="name">v1.5</td><td>Nov 2026</td><td><b>Daily spend, stacked by category.</b> A new Overview card under the budget rows shows one bar per day of the selected month, split by the same categories in the same colours, so you can see <i>when</i> the money went out rather than only how much. It uses the same filter as the budget rows &mdash; recurring spend only, same excluded buckets &mdash; so the stack totals reconcile with them exactly. A dashed line marks the month&rsquo;s budget spread evenly across its days, and the <code>Transactions</code> date column (A) is now read, where previously only the month was. When one day is more than five times the median &mdash; a rent day, typically &mdash; the axis clips so the remaining days stay readable and the tall bar is labelled with its true total; on an ordinary month the clip never fires.</td></tr>
         <tr><td class="name">v1.4</td><td>Oct 2026</td><td><b>Category totals on the subcategory chart.</b> In the Analyst view, each category now has a dashed vertical line in its own colour at this month&rsquo;s category total, labelled with the amount (&Sigma;), so you can read the whole category without adding up its bars. The shared scale stretches to fit the largest total; the label hides in privacy mode.</td></tr>
         <tr><td class="name">v1.3</td><td>Jul 2026</td><td><b>Cash-flow forecast no longer double-counts debt you have already provided for.</b> The forecast opens from net liquidity, which has already subtracted every short-term liability &mdash; but it then charged those same debts again as they fell due, once as a dated liability and once as a card-repayment bill. A one-off debt held in cash therefore pushed the curve below zero twice over. Dated liabilities are no longer re-charged when the opening balance is net liquidity (the cash+savings fallback, which deducts nothing, is unchanged). Card bills are no longer charged at all &mdash; paying a card moves money between your own cash and your own liability and leaves net liquidity untouched. What does reduce it is the spending, so the forecast now charges forward <b>card spend</b> instead, accrued smoothly day by day rather than as a month-end cliff. That figure is yours to set: a <b><code>Target card spend per month</code></b> row on the <code>Dashboard</code> sheet is used verbatim, including zero. Only when no such row exists does the forecast fall back to a run-rate averaged over the last three complete months in <code>Transactions</code>, so an unconfigured workbook still draws a curve.</td></tr>
         <tr><td class="name">v1.2</td><td>Jul 2026</td><td><b>Multilingual UI</b> — English, Italian, Spanish, French and German. The language comes from a header picker that remembers your choice; failing that from <code>Config!SETTINGS</code> &ldquo;Language&rdquo;; failing that from the browser. Number, date and month-name formatting follow the chosen language unless <code>Config</code> names an explicit <code>Locale</code>, which still wins. Category and subcategory names are never translated &mdash; they are shown exactly as typed in the workbook. Privacy-mode figure matching is now rebuilt from the active locale&rsquo;s thousands/decimal separators and unit words, so blurring still catches every figure outside English. Help badges are keyed off <code>data-help</code> instead of matching English title text. Adding a language is one entry in <code>LANGS</code> and one block in <code>DICT</code>.</td></tr>
@@ -1211,6 +1247,65 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
         }); ctx.restore(); }};
       mkc('ovDonut',{type:'doughnut',plugins:[callout],data:{labels:comp.map(function(x){return x[0];}),datasets:[{data:comp.map(function(x){return x[2];}),backgroundColor:comp.map(function(x){return x[1];}),borderColor:'#16161e',borderWidth:2}]},options:{maintainAspectRatio:false,cutout:'56%',layout:{padding:{left:132,right:132,top:28,bottom:28}},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.label+': '+gbp(c.raw);}}}}}});
       })();
+    (function(){ var el=document.getElementById('ovDaily'); if(!el)return;
+      var D=window.__daily, card=document.getElementById('ovDailyCard');
+      if(!D||!D.cats.length){ if(card)card.style.display='none'; var ex=Chart.getChart('ovDaily'); if(ex)ex.destroy(); return; }
+      if(card)card.style.display='';
+      /* One rent-sized day can be 10x the median and flatten every other bar, which
+         defeats the point of a daily view. Same remedy the savings-rate chart already
+         uses: clip the axis and print the true total above the clipped bar. The 5x-median
+         trigger is a data rule, so it fires on a rent month and stays out of the way on
+         an ordinary one — nothing here is tied to what the big day happens to be. */
+      var totals=D.days.map(function(_,i){return D.cats.reduce(function(t,c,ci){return t+(D.series[ci][i]||0);},0);});
+      var nz=totals.filter(function(v){return v>0;}).sort(function(a,b){return b-a;});
+      var med=nz.length?nz[Math.floor(nz.length/2)]:0;
+      var _niceUp=function(x){var e=Math.pow(10,Math.floor(Math.log(Math.max(1,x))/Math.LN10)),f=x/e;return (f<=1?1:f<=2?2:f<=5?5:10)*e;};
+      /* round up to the next whole "nice step" rather than the next power-of-ten bracket,
+         so 535 clips at 600 and not at 1000 — the latter would leave the tall bar nearly
+         unclipped and gain nothing. */
+      var _ceilNice=function(x){var st=_niceUp(x/4)||1; return Math.ceil(x/st)*st;};
+      var clipAt=null;
+      if(nz.length>2&&med>0&&nz[0]>5*med){
+        clipAt=Math.max(_ceilNice(nz[1]*1.15),(D.allow||0)*1.25);
+        if(clipAt>=nz[0])clipAt=null;   // nothing gained if the tall bar still fits
+      }
+      var clipMarks={id:'ovDailyClip',afterDatasetsDraw:function(ch){
+        if(clipAt==null||document.body.classList.contains('privacy'))return;
+        var xs=ch.scales.x,A=ch.chartArea,ctx=ch.ctx; ctx.save();
+        ctx.font='12px -apple-system,sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top'; ctx.fillStyle='#cfcfe0';
+        totals.forEach(function(v,i){ if(v<=clipAt)return;
+          var x=Math.min(Math.max(xs.getPixelForValue(i),A.left+28),A.right-28);
+          ctx.fillText('\u25b2 '+gbp(v),x,A.top+2); });
+        ctx.restore(); }};
+      /* Dashed line at the month's budget spread evenly over its days: bars above it are
+         days that ran ahead of pace. Drawn, like every other canvas label, only outside
+         privacy mode — the figure would otherwise be readable with the axis hidden. */
+      var allowLine={id:'ovDailyAllow',afterDatasetsDraw:function(ch){
+        if(D.allow==null||document.body.classList.contains('privacy'))return;
+        var ys=ch.scales.y; if(!ys)return; var y=ys.getPixelForValue(D.allow), A=ch.chartArea, ctx=ch.ctx;
+        if(!isFinite(y)||y<A.top-1||y>A.bottom+1)return;
+        ctx.save(); ctx.strokeStyle='#8a8a9a'; ctx.lineWidth=1.5; ctx.setLineDash([5,4]);
+        ctx.beginPath(); ctx.moveTo(A.left,y); ctx.lineTo(A.right,y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#9a9aa8'; ctx.font='12px -apple-system,sans-serif';
+        ctx.textAlign='right'; ctx.textBaseline='bottom';
+        ctx.fillText(L('daily.allowance',{x:gbp(D.allow)}),A.right-2,y-3); ctx.restore(); }};
+      mkc('ovDaily',{type:'bar',plugins:[allowLine,clipMarks],
+        data:{labels:D.days,datasets:D.cats.map(function(c){
+          return {label:c,data:D.series[D.cats.indexOf(c)],backgroundColor:D.col[c]||'#8a8a9a',
+                  borderRadius:2,barPercentage:.9,categoryPercentage:.86,stack:'d',pointStyle:'rect'};})},
+        options:{maintainAspectRatio:false,barLabelMax:0,
+          interaction:{mode:'index',intersect:false},
+          plugins:{legend:{position:'bottom',labels:{color:'#c7c7d3',usePointStyle:true,pointStyle:'rect',boxWidth:12,font:{size:12}}},
+            tooltip:{callbacks:{
+              title:function(it){return L('tip.dailyDay',{d:it[0].label});},
+              label:function(c){return (c.raw===0||c.raw==null)?null:c.dataset.label+': '+gbp(c.raw);},
+              footer:function(it){var t=0;it.forEach(function(x){t+=(+x.raw||0);});return L('tip.dailyTotal',{x:gbp(t)});}}}},
+          scales:{x:{stacked:true,grid:{display:false},
+                     ticks:{color:'#9a9aa8',font:{size:12},autoSkip:false,maxRotation:0,
+                            callback:function(v,i){var d=this.getLabelForValue?this.getLabelForValue(v):v;
+                              return (d==1||d%5===0)?d:'';}}},
+                  y:{stacked:true,max:(clipAt==null?undefined:clipAt),grid:{color:'#1e1e2a'},
+                     ticks:{color:'#9a9aa8',font:{size:12},callback:unitTick}}}}}); })();
     if(window.__bva){var Bb=window.__bva,pe2=S.pctElapsed; if(pe2!=null&&pe2>1)pe2=pe2/100; if(!pe2)pe2=0.5; var rws=Bb.rows.filter(function(r){return r.budget>0||r.actual>0;});
       var eb=G('ovBudget'); if(eb)eb.innerHTML=rws.map(function(r){var pace=r.budget>0?Math.round(r.actual/(r.budget*pe2)*100):null,col=pace==null?'#9a9aa8':(pace>TH.paceAlertPct?'#f87171':pace>TH.paceWarnPct?'#fbbf24':'#4ade80'),w=r.budget>0?Math.min(100,Math.round(r.actual/r.budget*100)):0;
         return '<div onclick="__ovDrill(\''+r.cat.replace(/\x27/g,'')+'\')" style="display:grid;grid-template-columns:130px 1fr 96px;gap:12px;align-items:center;padding:9px 6px;border-radius:8px;cursor:pointer" onmouseover="this.style.background=\'#1c1c28\'" onmouseout="this.style.background=\'\'"><div style="font-size:13px;color:#e6e6ef;font-weight:600">'+r.cat+'</div><div style="height:16px;background:#0f0f13;border:1px solid #2a2a3a;border-radius:5px;overflow:hidden"><i style="display:block;height:100%;width:'+w+'%;background:'+col+'"></i></div><div style="text-align:right"><div style="font-size:12px;font-weight:700;color:'+col+'">'+(pace==null?'—':pace+'%')+'</div><div style="font-size:12px;color:#9a9aa8">'+gbp(r.actual)+' / '+gbp(r.budget)+'</div></div></div>';}).join('');
@@ -1455,7 +1550,10 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     var A=XLSX.utils.sheet_to_json(SH,{header:1});
     var tx=[];
     for(var i=1;i<A.length;i++){var r=A[i]; if(!r||!r[1])continue;
-      tx.push({m:String(r[1]),desc:String(r[3]||''),amt:(+r[4]||0),l1:r[5]||'',l2:r[6]||'',bk:r[7]||''});}
+      /* dy = day of month from column A, for the daily stacked bars. Null when the
+         date cell is blank or unparseable; such a row is simply left out of that chart. */
+      var _dt=toDate(r[0]);
+      tx.push({m:String(r[1]),dy:_dt?_dt.getDate():null,desc:String(r[3]||''),amt:(+r[4]||0),l1:r[5]||'',l2:r[6]||'',bk:r[7]||''});}
     if(!tx.length) return;
     // Categories + colours: from Config CATEGORIES if present, else auto-derived from the ledger (palette by spend). No category names hardcoded.
     var _CFG=readConfig(wb), CATCOL={}, CATS;
@@ -1551,6 +1649,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
     });}
     // budget vs actual: budgets from the Expenses sheet, ACTUALS recomputed from the ledger for the view month
     var EX=wb.Sheets['Expenses'];
+    var budget_total=null;   // hoisted: the daily-allowance line below needs it even though it is computed inside
     if(EX){var vrows=[];var repMonth=curM;   // view month (selector-driven), not the sheet's fixed reporting month
       // scan the category block by label (Category header -> Total) so added rows are picked up automatically
       var rrE=rowsOf(EX),startedE=false;
@@ -1567,7 +1666,7 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       var _ord=catOrder(vrows.map(function(r){return r.cat;}));
       vrows.sort(function(a,b){return _ord.indexOf(a.cat)-_ord.indexOf(b.cat);});
       window.__bva={rows:vrows.map(function(r){return {cat:r.cat,budget:r.budget,actual:r.actual};}),month:curM};
-      var budget_total=vrows.reduce(function(t,r){return t+r.budget;},0), actual_total=vrows.reduce(function(t,r){return t+r.actual;},0);
+      budget_total=vrows.reduce(function(t,r){return t+r.budget;},0); var actual_total=vrows.reduce(function(t,r){return t+r.actual;},0);
       // proportional-pace: fraction of the reporting month elapsed, then actual vs that day-proportional allowance
       var nowB=new Date(), curYM=nowB.getFullYear()+'-'+String(nowB.getMonth()+1).padStart(2,'0');
       var dimB=new Date(nowB.getFullYear(),nowB.getMonth()+1,0).getDate(), frac=nowB.getDate()/dimB;
@@ -1576,6 +1675,27 @@ try{if('scrollRestoration' in history)history.scrollRestoration='manual';}catch(
       var pctElapsed=Math.round(frac*100);
       STATE.budgetTotal=budget_total;STATE.actualTotal=actual_total;STATE.pctElapsed=pctElapsed;STATE.pace=(budget_total*frac)>0?Math.round(actual_total/(budget_total*frac)*100):0;STATE.repMonth=repMonth;
     }
+    /* Daily stacked bars for the selected month. Same filter as the budget rows above
+       (Recurring only, same excluded List 1 values) so the stack totals reconcile with
+       them exactly — these are those figures spread across the days they fell on.
+       Built last so the allowance line can use the budget total computed above. */
+    (function(){
+      var p=String(curM).split('-'), yr=+p[0], mo=(+p[1]||1)-1;
+      if(!isFinite(yr)||!isFinite(mo)){ window.__daily=null; return; }
+      var dim=new Date(yr,mo+1,0).getDate();
+      var EXCLd={Transfer:1,Income:1,Savings:1,REVIEW:1}, byCat={}, any=false;
+      tx.forEach(function(t){
+        if(t.m!==curM||t.bk!=='Recurring'||!t.l1||EXCLd[t.l1]||t.dy==null)return;
+        if(t.dy<1||t.dy>dim)return;
+        if(!byCat[t.l1]){var a=[];for(var i=0;i<dim;i++)a.push(0);byCat[t.l1]=a;}
+        byCat[t.l1][t.dy-1]+=t.amt; any=true; });
+      if(!any){ window.__daily=null; return; }
+      var days=[]; for(var d=1;d<=dim;d++)days.push(d);
+      var cats=catOrder(Object.keys(byCat));   // same order as every other view
+      var allow=(typeof budget_total==='number'&&budget_total>0)?(budget_total/dim):null;
+      window.__daily={month:curM,days:days,cats:cats,col:CATCOL,allow:allow,
+        series:cats.map(function(c){return byCat[c].map(function(v){return Math.round(v*100)/100;});})};
+    })();
   }
 
 

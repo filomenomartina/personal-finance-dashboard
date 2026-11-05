@@ -46,7 +46,7 @@ CONTAINERS = {
     "small multiples": "smgrid",
     "wish list": "wlInner",
 }
-CANVASES = ["ovFc", "ovTrend", "ovDonut", "cashbal", "savrate", "netsav",
+CANVASES = ["ovFc", "ovTrend", "ovDonut", "ovDaily", "cashbal", "savrate", "netsav",
             "subcat", "liabMix"]
 
 with sync_playwright() as p:

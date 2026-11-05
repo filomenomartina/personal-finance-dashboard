@@ -28,7 +28,8 @@ PROBES = {"verdict": "ovVt", "verdictSub": "ovVs", "safe": "ovSafe", "nw": "ovNW
           "nl": "ovNL", "sr": "ovSR", "rw": "ovRW", "goalNow": "ovGoalNow",
           "goalTgt": "ovGoalTgt", "safeSub": "ovSafeSub"}
 CHROME = {"tileNW": ".heroes .card:nth-child(2) .klabel",
-          "secChanged": ".sec-h", "footer": ".appfooter span"}
+          "secChanged": ".sec-h", "footer": ".appfooter span",
+          "dailyTitle": "#ovDailyCard .ctitle"}
 CANVASES = ["ovFc", "ovTrend", "ovDonut", "cashbal", "savrate", "netsav", "subcat", "liabMix"]
 LANGS = ["en", "it", "es", "fr", "de"]
 
@@ -52,6 +53,15 @@ def snapshot(pg):
     out["budget"] = pg.eval_on_selector("#ovBudget", "e=>e.children.length")
     out["insights"] = pg.eval_on_selector("#ovInsights", "e=>e.children.length")
     out["helpBadges"] = pg.evaluate("document.querySelectorAll('.help').length")
+    # the daily stack must add up to exactly the budget card's actual total, in every
+    # language — it is the same figures, only spread across the days they fell on
+    out["dailyVsBudget"] = pg.evaluate(
+        """(()=>{const c=window.Chart&&Chart.getChart('ovDaily');
+             if(!c||!window.__bva) return 'missing';
+             const stack=c.data.datasets.reduce((t,d)=>t+d.data.reduce((a,v)=>a+(+v||0),0),0);
+             const bva=window.__bva.rows.reduce((t,r)=>t+r.actual,0);
+             return {stack:Math.round(stack*100)/100, budget:Math.round(bva*100)/100,
+                     month:window.__daily&&window.__daily.month, bvaMonth:window.__bva.month};})()""")
     out["lang"] = pg.evaluate("document.documentElement.getAttribute('lang')")
     for cid in CANVASES:
         out["canvases"][cid] = pg.evaluate(
@@ -154,6 +164,15 @@ for lang in LANGS:
         failures.append(f"{lang}: 'Net worth' tile label was not translated")
     if lang != "en" and r["scalars"]["verdict"] == base["scalars"]["verdict"]:
         failures.append(f"{lang}: verdict headline was not translated")
+    if lang != "en" and r["chrome"]["dailyTitle"] == base["chrome"]["dailyTitle"]:
+        failures.append(f"{lang}: daily-spend card title was not translated")
+    dv = r["dailyVsBudget"]
+    if dv == "missing":
+        failures.append(f"{lang}: daily chart or budget data missing")
+    elif abs(dv["stack"] - dv["budget"]) > 0.02:
+        failures.append(f"{lang}: daily stack {dv['stack']} != budget actual {dv['budget']}")
+    elif dv["month"] != dv["bvaMonth"]:
+        failures.append(f"{lang}: daily month {dv['month']} != budget month {dv['bvaMonth']}")
 
 sw = results["switch_en_to_it"]
 if sw["lang"] != "it":
